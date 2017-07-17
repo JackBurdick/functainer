@@ -8,6 +8,7 @@ NOTE:
 */
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -30,18 +31,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func cosineSim(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	if len(r.Form["data"]) > 0 {
 
-		// Extract data from form and process data
-		data := r.Form["data"][0]
-		fNameToCosSim, err := cosineSimilarity(data)
-		if err != nil {
-			fmt.Fprintf(w, "Unable to calculate cosineSimilarity: %v", err)
-		}
-		fmt.Fprintf(w, "Success: Cosine map: %v", fNameToCosSim)
+	decoder := json.NewDecoder(r.Body)
+	var JSONdata []byte
+	err := decoder.Decode(&JSONdata)
 
-	} else {
-		fmt.Fprintln(w, "Nothing to see here - did you specify the data?")
+	if err != nil {
+		panic(err)
 	}
+	defer r.Body.Close()
+
+	fNameToCosSim, err := cosineSimilarity(JSONdata)
+	if err != nil {
+		fmt.Fprintf(w, "Unable to calculate cosineSimilarity: %v", err)
+	}
+	fmt.Fprintf(w, "Success: Cosine map: %v", fNameToCosSim)
+
 }
