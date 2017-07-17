@@ -7,8 +7,6 @@ import (
 	"math"
 	"os"
 	"strings"
-
-	"github.com/jdkato/prose/tokenize"
 )
 
 // createSetFromJson
@@ -32,21 +30,7 @@ func createSetFromJSON(jsonPath string) map[string]bool {
 
 // cosineSimilarity accepts a path to a directory containing .txt files and
 // returns the cosine similarity between each document.
-func cosineSimilarity(dPath string) (map[string]map[string]float64, error) {
-
-	fileMap := make(map[string][]string)
-
-	// Create map of filename to tokenized content.
-	dFiles, _ := ioutil.ReadDir(dPath)
-	for _, f := range dFiles {
-		b, err := ioutil.ReadFile(dPath + f.Name())
-		if err != nil {
-			fmt.Print(err)
-		}
-
-		// Convert bytes to string, then use 3rd party to tokenize.
-		fileMap[f.Name()] = tokenize.TextToWords(string(b))
-	}
+func cosineSimilarity(fileMap map[string][]string) (map[string]map[string]float64, error) {
 
 	// Convert every word to lowercase in the document.
 	for fName, doc := range fileMap {
