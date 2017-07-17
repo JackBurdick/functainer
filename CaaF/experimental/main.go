@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	inputDir := "./input"
-	URL := "localhost:8000"
+	inputDir := "./input/"
+	URL := "localhost:8000/cosineSim"
 
 	// Create map from input directory.
 	fileMap, err := createMap(inputDir)
@@ -28,6 +28,9 @@ func main() {
 
 	// Make http request to container. (using JSON)
 	result, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	// Process results.
 	fmt.Println(result)
