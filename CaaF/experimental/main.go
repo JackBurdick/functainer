@@ -12,7 +12,7 @@ import (
 
 func main() {
 	inputDir := "./input/"
-	URL := "localhost:8000/cosineSim"
+	URL := "http://localhost:8000/cosineSim"
 
 	// Create map from input directory.
 	fileMap, err := createMap(inputDir)
