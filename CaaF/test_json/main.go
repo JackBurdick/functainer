@@ -22,11 +22,12 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(jsonData)
 
 	// Yippee!
-	var x map[string]interface{}
+	var x map[string][]string
 	json.Unmarshal(jsonData, &x)
-	fmt.Println(x)
+	//fmt.Println(x)
 }
 
 func createMap(dPath string) (map[string][]string, error) {
