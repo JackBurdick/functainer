@@ -31,7 +31,22 @@ func createSetFromJSON(jsonPath string) map[string]bool {
 
 // cosineSimilarity accepts a path to a directory containing .txt files and
 // returns the cosine similarity between each document.
-func cosineSimilarity(fileMap map[string][]string) (map[string]map[string]float64, error) {
+func cosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
+
+	// TODO: this may be a bad idea....
+	// link: https://stackoverflow.com/questions/37329246/how-to-convert-string-from-interface-to-string-in-golang
+
+	// The interface needs to be converted to a string for this functionality
+	var tempMap map[string]interface{}
+	json.Unmarshal(jsonData, &tempMap)
+
+	// for i, _ := range tempMap {
+
+	// }
+	// aString := make([]string, len(tempMap))
+	// for _, v := range data["aString"] {
+	// 	aString = append(aString, v.(string))
+	// }
 
 	// Convert every word to lowercase in the document.
 	for fName, doc := range fileMap {
