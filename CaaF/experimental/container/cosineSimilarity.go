@@ -33,20 +33,9 @@ func createSetFromJSON(jsonPath string) map[string]bool {
 // returns the cosine similarity between each document.
 func cosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
 
-	// TODO: this may be a bad idea....
-	// link: https://stackoverflow.com/questions/37329246/how-to-convert-string-from-interface-to-string-in-golang
-
 	// The interface needs to be converted to a string for this functionality
-	var tempMap map[string]interface{}
-	json.Unmarshal(jsonData, &tempMap)
-
-	// for i, _ := range tempMap {
-
-	// }
-	// aString := make([]string, len(tempMap))
-	// for _, v := range data["aString"] {
-	// 	aString = append(aString, v.(string))
-	// }
+	var fileMap map[string][]string
+	json.Unmarshal(jsonData, &fileMap)
 
 	// Convert every word to lowercase in the document.
 	for fName, doc := range fileMap {
@@ -136,8 +125,6 @@ func cosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
 		fileNameTFIDF[fileName] = wordToTFIDF
 	}
 
-	//fmt.Println(fileNameTFIDF)
-
 	// -------------- calculate cosine similarity
 
 	// create map of word to tf-idf in each document.
@@ -186,8 +173,6 @@ func cosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
 		fNameToCosineNumMap[fNameA] = tempMap
 	}
 
-	//fmt.Println(fNameToCosineNumMap)
-
 	// ---------- denom
 	// square root of each value
 	fNameToCosDenPre := make(map[string]float64)
@@ -222,16 +207,6 @@ func cosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
 		}
 		fNameToCosSim[fNameA] = tempCosMap
 	}
-
-	for file, vMap := range fNameToCosSim {
-		fmt.Printf("%v| ", file)
-		for fB, v := range vMap {
-			fmt.Printf(" %v:%.2f |", fB, v)
-		}
-		fmt.Printf("\n")
-	}
-
-	//fmt.Println(fNameToCosSim)
 
 	return fNameToCosSim, nil
 }
