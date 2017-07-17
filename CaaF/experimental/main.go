@@ -1,47 +1,35 @@
 package main
 
-/*
-NOTE:
- - Could this be the "dataduit" wrapper?
- - Send this through a load balancer to call container w/compiled function?
-
-*/
-
 import (
 	"fmt"
-	"net/http"
-	"time"
+	"io/ioutil"
+
+	"github.com/jdkato/prose/tokenize"
 )
 
 func main() {
-	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", handler)
-	mux.HandleFunc("/cosineSim", cosineSim)
+	// get input ready
 
-	http.ListenAndServe(":8080", mux)
+	// make http request to container
+
+	// process results
+
 }
 
-// handler is the main handler and returns the current time.
-// NOTE: This is included for demo purposes only.
-func handler(w http.ResponseWriter, r *http.Request) {
-	curTime := time.Now()
-	fmt.Fprintf(w, "%s", curTime)
-}
-
-func cosineSim(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
-	if len(r.Form["data"]) > 0 {
-
-		// Extract data from form and process data
-		data := r.Form["data"][0]
-		fNameToCosSim, err := cosineSimilarity(data)
+func createMap(dPath string) (map[string][]string, error) {
+	fileMap := make(map[string][]string)
+	// Create map of filename to tokenized content.
+	dFiles, _ := ioutil.ReadDir(dPath)
+	for _, f := range dFiles {
+		b, err := ioutil.ReadFile(dPath + f.Name())
 		if err != nil {
-			fmt.Fprintf(w, "Unable to calculate cosineSimilarity: %v", err)
+			fmt.Print(err)
 		}
-		fmt.Fprintf(w, "Success: Cosine map: %v", fNameToCosSim)
 
-	} else {
-		fmt.Fprintln(w, "Nothing to see here - did you specify the data?")
+		// Convert bytes to string, then use 3rd party to tokenize.
+		fileMap[f.Name()] = tokenize.TextToWords(string(b))
 	}
+
+	return fileMap, nil
 }
