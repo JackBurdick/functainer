@@ -1,5 +1,9 @@
 ## Experimental CaaF
 
+**THIS IS CURRENTLY FAILING**
+Problem: I think the error has to do with passing/parsing/accepting the JSON data..
+PLAN: Write a simple API, run locally, pass JSON data and see if that works
+
 ## Running
 1. build docker image
     - `docker image build -t jackburdick/cosineexp .`
