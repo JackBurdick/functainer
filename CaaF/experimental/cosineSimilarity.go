@@ -1,4 +1,4 @@
-package cosineSimilarity
+package main
 
 import (
 	"encoding/json"
@@ -32,7 +32,7 @@ func createSetFromJSON(jsonPath string) map[string]bool {
 
 // cosineSimilarity accepts a path to a directory containing .txt files and
 // returns the cosine similarity between each document.
-func cosineSimilarity(dPath string) (int, error) {
+func cosineSimilarity(dPath string) (map[string]map[string]float64, error) {
 
 	fileMap := make(map[string][]string)
 
@@ -233,5 +233,5 @@ func cosineSimilarity(dPath string) (int, error) {
 
 	//fmt.Println(fNameToCosSim)
 
-	return 1, nil
+	return fNameToCosSim, nil
 }
