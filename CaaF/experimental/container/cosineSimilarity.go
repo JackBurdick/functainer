@@ -17,6 +17,7 @@ func createSetFromJSON(jsonPath string) map[string]bool {
 		os.Exit(1)
 	}
 
+	// TODO: handle this error
 	var arr []string
 	_ = json.Unmarshal([]byte(file), &arr)
 
