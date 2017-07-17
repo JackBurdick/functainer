@@ -1,5 +1,13 @@
 ## Experimental CaaF
 
+## Running
+1. build docker image
+    - `docker image build -t jackburdick/cosineexp .`
+2. Run the docker image
+    - `docker run -d --rm -p 8000:8080 jackburdick/cosineexp`
+
+
+
 ## Resources
 - `Dockerfile`
     - [multi-stage-docker-builds-for-creating-tiny-go-images](https://medium.com/travis-on-docker/multi-stage-docker-builds-for-creating-tiny-go-images-e0e1867efe5a)
