@@ -12,9 +12,14 @@
     - `docker run -d --rm -p 8000:8080 jackburdick/cosineexp`
 3. Navigate to main file
     - target: `dataduit\CaaF\experimental\container`
-4. Run `main.go` for testing
-    - `go run main.go`
+    - Run `main.go` for testing
+        - `go run main.go`
 
+### image information
+```
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+jackburdick/cosineexp       latest              bd01de83d2a6        7 minutes ago       10.1MB
+```
 
 
 ## Resources
