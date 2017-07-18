@@ -17,8 +17,8 @@ func main() {
 	inputDir := "./input/"
 
 	// URL endpoints.
-	URL := "http://localhost:8080/cosineSim"
-	//URL := "http://localhost:8080/"
+	URL := "http://localhost:8000/cosineSim"
+	//URL := "http://localhost:8000/"
 
 	// Create map from input directory.
 	fileMap, err := createMap(inputDir)
@@ -48,15 +48,17 @@ func main() {
 		NOTE: if sending plain json, this was working
 			- req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
 	*/
+
 	req, err := http.NewRequest("POST", URL, &buf)
 	if err != nil {
 		fmt.Println(err)
 	}
-	req.Header.Set("X-Custom-Header", "Meeeeoooww")
+	req.Header.Set("X-Custom-Header", "CaaF")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 
 	// Get response.
+	fmt.Println("OK")
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
