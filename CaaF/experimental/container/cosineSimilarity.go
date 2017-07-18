@@ -31,7 +31,7 @@ func createSetFromJSON(jsonPath string) map[string]bool {
 
 // cosineSimilarity accepts a path to a directory containing .txt files and
 // returns the cosine similarity between each document.
-func cosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
+func CosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
 
 	// The interface needs to be converted to a string for this functionality
 	var fileMap map[string][]string

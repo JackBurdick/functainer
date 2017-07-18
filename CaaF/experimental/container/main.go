@@ -35,13 +35,24 @@ func cosineSim(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var JSONdata []byte
 	err := decoder.Decode(&JSONdata)
-
 	if err != nil {
 		panic(err)
 	}
 	defer r.Body.Close()
 
-	fNameToCosSim, err := cosineSimilarity(JSONdata)
+	// var fileMap map[string][]string
+
+	// if r.Body == nil {
+	// 	http.Error(w, "Please send a request body", 400)
+	// 	return
+	// }
+	// err := json.NewDecoder(r.Body).Decode(&fileMap)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), 400)
+	// 	return
+	// }
+
+	fNameToCosSim, err := CosineSimilarity(JSONdata)
 	if err != nil {
 		fmt.Fprintf(w, "Unable to calculate cosineSimilarity: %v", err)
 	}
