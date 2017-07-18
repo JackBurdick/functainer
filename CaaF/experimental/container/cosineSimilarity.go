@@ -46,7 +46,7 @@ func CosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
 	}
 
 	// Filter the stop words out of the content.
-	swSet := createSetFromJSON("../fixtures/en_stopwords.json")
+	swSet := createSetFromJSON("./fixtures/en_stopwords.json")
 	for fName, doc := range fileMap {
 		filteredDoc := doc[:0]
 		for _, word := range doc {
@@ -59,7 +59,7 @@ func CosineSimilarity(jsonData []byte) (map[string]map[string]float64, error) {
 	}
 
 	// Filter the punctuation from the content.
-	puncSet := createSetFromJSON("../fixtures/en_punctuation.json")
+	puncSet := createSetFromJSON("./fixtures/en_punctuation.json")
 	for fName, doc := range fileMap {
 		filteredDoc := doc[:0]
 		for _, word := range doc {
