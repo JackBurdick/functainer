@@ -1,4 +1,4 @@
-#CaaF: **C**ontainer **a**s **a** **F**unction
+# CaaF: **C**ontainer **a**s **a** **F**unction
 
 
 ### Ideal case
