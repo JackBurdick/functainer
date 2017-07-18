@@ -1,7 +1,6 @@
 ## Experimental CaaF
 
 **NOTE**
-- The ports are a bit strange.. currently calling `8080` from "api", this doesn't feel right.. I think it should really be `8000`
 - Everything is currently gziped -- I don't know the limitations of this.
 - A config file will be needed
 
@@ -11,14 +10,14 @@
 2. Run the docker image
     - `docker run -d --rm -p 8000:8080 jackburdick/cosineexp`
 3. Navigate to main file
-    - target: `dataduit\CaaF\experimental\container`
+    - target: `dataduit\CaaF\experimental\call_container`
     - Run `main.go` for testing
         - `go run main.go`
 
 ### image information
 ```
-REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
-jackburdick/cosineexp       latest              bd01de83d2a6        7 minutes ago       10.1MB
+REPOSITORY                  TAG                 IMAGE ID            CREATED              SIZE
+jackburdick/cosineexp       latest              a21e1999784a        About a minute ago   10.1MB
 ```
 
 
