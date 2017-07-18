@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +12,11 @@ import (
 )
 
 func main() {
-	inputDir := "./small_input/"
+	// Input directories to choose from.
+	//inputDir := "./small_input/"
+	inputDir := "./input/"
+
+	// URL endpoints.
 	URL := "http://localhost:8080/cosineSim"
 	//URL := "http://localhost:8080/"
 
@@ -21,19 +26,35 @@ func main() {
 		fmt.Println(err)
 	}
 
-	// Build form from map.
+	// Build json data from map.
 	jsonData, err := json.Marshal(fileMap)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// Create http request to container. (using JSON)
-	req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
+	// Gzip json data.
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_, err = zw.Write(jsonData)
+	if err != nil {
+		fmt.Printf("can't gzip: %v\n", err)
+	}
+	if err := zw.Close(); err != nil {
+		fmt.Printf("can't close zw: %v\n", err)
+	}
+
+	// Create http request to container. (using JSON+gzip)
+	/*
+		NOTE: if sending plain json, this was working
+			- req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
+	*/
+	req, err := http.NewRequest("POST", URL, &buf)
 	if err != nil {
 		fmt.Println(err)
 	}
 	req.Header.Set("X-Custom-Header", "Meeeeoooww")
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
 
 	// Get response.
 	client := &http.Client{}
