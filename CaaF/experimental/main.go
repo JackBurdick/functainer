@@ -11,8 +11,9 @@ import (
 )
 
 func main() {
-	inputDir := "./input/"
-	URL := "http://localhost:8000/cosineSim"
+	inputDir := "./small_input/"
+	URL := "http://localhost:8080/cosineSim"
+	//URL := "http://localhost:8080/"
 
 	// Create map from input directory.
 	fileMap, err := createMap(inputDir)
@@ -26,14 +27,26 @@ func main() {
 		fmt.Println(err)
 	}
 
-	// Make http request to container. (using JSON)
-	result, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
+	// Create http request to container. (using JSON)
+	req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println(err)
 	}
+	req.Header.Set("X-Custom-Header", "Meeeeoooww")
+	req.Header.Set("Content-Type", "application/json")
 
-	// Process results.
-	fmt.Println(result)
+	// Get response.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("response Status:", resp.Status)
+	fmt.Println("response Headers:", resp.Header)
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("response Body:", string(body))
 
 }
 
