@@ -1,14 +1,19 @@
 ## Experimental CaaF
 
-**THIS IS CURRENTLY FAILING**
-Problem: I think the error has to do with passing/parsing/accepting the JSON data..
-PLAN: Write a simple API, run locally, pass JSON data and see if that works
+**NOTE**
+- The ports are a bit strange.. currently calling `8080` from "api", this doesn't feel right.. I think it should really be `8000`
+- Everything is currently gziped -- I don't know the limitations of this.
+- A config file will be needed
 
 ## Running
 1. build docker image
     - `docker image build -t jackburdick/cosineexp .`
 2. Run the docker image
     - `docker run -d --rm -p 8000:8080 jackburdick/cosineexp`
+3. Navigate to main file
+    - target: `dataduit\CaaF\experimental\container`
+4. Run `main.go` for testing
+    - `go run main.go`
 
 
 
