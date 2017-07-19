@@ -1,5 +1,8 @@
 # Dataduit
 
+## Note
+- switching to edge build of docker for windows since I need the latest update for parsing the ID
+    - information here: https://github.com/moby/moby/issues/33946
 
 ### Links
 - [lucid chart](https://www.lucidchart.com/invitations/accept/e348323e-11f7-45a9-b830-77764936fdb8)
