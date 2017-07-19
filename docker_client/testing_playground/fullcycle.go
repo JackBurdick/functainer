@@ -1,6 +1,6 @@
 package main
 
-// TODO: expose ports
+// TODO: Error handling needs to be implemented.
 
 import (
 	"context"
@@ -51,11 +51,11 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 	for _, image := range images {
 
 		// Select specified image by the repo tag.
-		fmt.Println(strings.Join(image.RepoTags, ""))
 		if strings.Join(image.RepoTags, "") == imgTag {
 
 			// Create the container from the image.
 			// TODO: Devise a progamatic way of producting a container name.
+			// I'm not even sure if the container name is assigned right now.
 			exposedPort := map[nat.Port]struct{}{"8080/tcp": {}}
 			configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedPort}
 			networkConfig := network.NetworkingConfig{}
@@ -65,7 +65,7 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 				PublishAllPorts: true,
 				PortBindings:    portBindings,
 			}
-			containerName := "jacksss"
+			containerName := "dunnoman"
 			createResponse, err := cli.ContainerCreate(context.Background(), &configOptions, &hostConfig, &networkConfig, containerName)
 			if err != nil {
 				fmt.Println(err)
@@ -99,18 +99,15 @@ func stopContainerByID(contID string, cli *client.Client) {
 	if err != nil {
 		fmt.Println("ERROR: can't stop container")
 	}
-	fmt.Printf("id: %v, stopped?\n", contID)
 }
 
 // removeContainerByID removes the container.
 func removeContainerByID(contID string, cli *client.Client) {
 	// TODO: Weigh the advantages of using the `force: true` flag here
-	err := cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{})
+	err := cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		fmt.Println("ERROR: can't remove container")
 	}
-	fmt.Printf("id: %v, removed?\n", contID)
-
 }
 
 // buildContainerFromImage
@@ -118,16 +115,14 @@ func deleteImageByTag(imgTag string, images []types.ImageSummary, cli *client.Cl
 	// TODO: Can the image loop be removed?
 	for _, image := range images {
 		if strings.Join(image.RepoTags, "") == imgTag {
-			fmt.Printf("image.ID: %v\n", image.ID)
-
 			imgID := strings.TrimLeft(image.ID, "sha256")
 			imgID = strings.TrimLeft(imgID, ":")
-			deleteResponse, err := cli.ImageRemove(context.Background(), imgID, types.ImageRemoveOptions{})
+			_, err := cli.ImageRemove(context.Background(), imgID, types.ImageRemoveOptions{})
 			if err != nil {
 				fmt.Printf("ERROR: image %v not deleted\n", imgID)
 			}
-			fmt.Printf("Image deleted: %v\n", imgID)
-			fmt.Println(deleteResponse)
+			//fmt.Printf("Image deleted: %v\n", imgID)
+			//fmt.Println(deleteResponse)
 		}
 	}
 }
@@ -175,5 +170,8 @@ func main() {
 
 	// Delete the image.
 	deleteImageByTag(imgTag, images, cli)
+
+	// need to prune old image.
+	//cli.ContainersPrune()
 
 }
