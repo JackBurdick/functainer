@@ -19,27 +19,29 @@ import (
 )
 
 func main() {
+
+	// Constants, these will hopefully eventually come from a YAML file.
 	imgHandle := "jackburdick/automated"
+	imgTag := imgHandle + ":latest"
 	pathToDockerfile := "../../CaaF/Experimental/container/"
 	pathToCreatedTarDir := "./test_arch/archieve"
 
+	// Create docker cli environment.
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		panic(err)
 	}
 
-	// Create tar.
+	// Create tar of the Dockerfile directory.
 	tar := new(archivex.TarFile)
 	tar.Create(pathToCreatedTarDir)
 	tar.AddAll(pathToDockerfile, false)
 	tar.Close()
 
+	// Build image from .tar file.
 	dockerBuildContext, err := os.Open(pathToCreatedTarDir + ".tar")
 	defer dockerBuildContext.Close()
-	//defaultHeaders := map[string]string{"User-Agent": ""}
-
 	buildOptions := types.ImageBuildOptions{Tags: []string{imgHandle}}
-
 	buildResponse, err := cli.ImageBuild(context.Background(), dockerBuildContext, buildOptions)
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
@@ -50,16 +52,15 @@ func main() {
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
 	}
-	//fmt.Println(string(response))
 
-	// ---------- Build container from image
+	// Build container from image.
 	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
 	if err != nil {
 		panic(err)
 	}
 
-	imgTag := imgHandle + ":latest"
-
+	// Create the container from the image.
+	// TODO: see if I can do this without the loop.
 	var contID string
 	for _, image := range images {
 
@@ -67,38 +68,27 @@ func main() {
 		fmt.Println(strings.Join(image.RepoTags, ""))
 		if strings.Join(image.RepoTags, "") == imgTag {
 
-			// look into this helper function
-			// portMap, bindingMap, err := nat.ParsePortSpecs([]string{"1234/tcp", "2345/udp"})
-
+			// Create the container from the image.
+			// TODO: Devise a progamatic way of producting a container name.
 			exposedPort := map[nat.Port]struct{}{"8080/tcp": {}}
 			configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedPort}
-
 			networkConfig := network.NetworkingConfig{}
-
-			//could also use 0.0.0.0, in place of 127.0.0.1 for local host
-			// https://stackoverflow.com/questions/38834434/how-are-127-0-0-1-0-0-0-0-and-localhost-different
 			portBindings := map[nat.Port][]nat.PortBinding{
 				"8080/tcp": {{HostIP: "127.0.0.1", HostPort: "8000"}}}
-
 			hostConfig := container.HostConfig{
 				PublishAllPorts: true,
 				PortBindings:    portBindings,
 			}
-
-			// TODO: Devise a progamatic way of producting a container name.
-
-			// Create container
 			containerName := "jacksss"
 			createResponse, err := cli.ContainerCreate(context.Background(), &configOptions, &hostConfig, &networkConfig, containerName)
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Println(createResponse)
 			contID = createResponse.ID
 		}
 	}
 
-	// Start the container
+	// Start the container.
 	if contID != "" {
 		err = cli.ContainerStart(context.Background(), contID, types.ContainerStartOptions{})
 		if err != nil {
@@ -119,6 +109,7 @@ func main() {
 	}
 	fmt.Printf("id: %v, stopped?\n", contID)
 
+	// Remove the container.
 	// TODO: Weigh the advantages of using the `force: true` flag here
 	err = cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{})
 	if err != nil {
@@ -126,7 +117,7 @@ func main() {
 	}
 	fmt.Printf("id: %v, removed?\n", contID)
 
-	// Delete image
+	// Delete the image
 	// TODO: Can the image loop be removed?
 	for _, image := range images {
 		if strings.Join(image.RepoTags, "") == imgTag {
