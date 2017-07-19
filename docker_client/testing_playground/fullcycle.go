@@ -27,8 +27,22 @@ func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, err
 	return pathToCreatedTarDir + ".tar", nil
 }
 
-func buildImageFromTar() {
+// buildImageFromTar creates the tar of the Dockerfile and directory.
+func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
+	// Build image from .tar file.
+	dockerBuildContext, err := os.Open(tarPath)
+	defer dockerBuildContext.Close()
+	buildOptions := types.ImageBuildOptions{Tags: []string{imgHandle}}
+	buildResponse, err := cli.ImageBuild(context.Background(), dockerBuildContext, buildOptions)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+	}
 
+	// This needs to be here to ensure the image is built before we start/run it.
+	_, err = ioutil.ReadAll(buildResponse.Body)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+	}
 }
 
 func main() {
@@ -51,20 +65,8 @@ func main() {
 		panic(err)
 	}
 
-	// Build image from .tar file.
-	dockerBuildContext, err := os.Open(tarPath)
-	defer dockerBuildContext.Close()
-	buildOptions := types.ImageBuildOptions{Tags: []string{imgHandle}}
-	buildResponse, err := cli.ImageBuild(context.Background(), dockerBuildContext, buildOptions)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-	}
-
-	// This needs to be here to ensure the image is built before we start/run it.
-	_, err = ioutil.ReadAll(buildResponse.Body)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-	}
+	// Build image from the tar file.
+	buildImageFromTar(tarPath, imgHandle, cli)
 
 	// Build container from image.
 	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
