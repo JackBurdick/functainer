@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -61,8 +62,10 @@ func main() {
 
 			networkConfig := network.NetworkingConfig{}
 
+			//could also use 0.0.0.0, in place of 127.0.0.1 for local host
+			// https://stackoverflow.com/questions/38834434/how-are-127-0-0-1-0-0-0-0-and-localhost-different
 			portBindings := map[nat.Port][]nat.PortBinding{
-				"8080/tcp": {{HostIP: "0.0.0.0", HostPort: "8080"}}}
+				"8080/tcp": {{HostIP: "127.0.0.1", HostPort: "8000"}}}
 
 			hostConfig := container.HostConfig{
 				PublishAllPorts: true,
@@ -70,12 +73,15 @@ func main() {
 			}
 
 			// TODO: Devise a progamatic way of producting a container name.
+
+			// Create container
 			containerName := "jacksss"
 			createResponse, err := cli.ContainerCreate(context.Background(), &configOptions, &hostConfig, &networkConfig, containerName)
 			if err != nil {
 				fmt.Println(err)
 			}
 			contID = createResponse.ID
+
 		}
 	}
 
@@ -88,5 +94,16 @@ func main() {
 	} else {
 		fmt.Println("Error: no container created")
 	}
+
+	// Stop the container
+	// TODO: I have a stop time here, when the stoptime was nil, the processes
+	// took noticeably long.. I need to investigate what, if any, problems this
+	// causes.
+	stopTime := time.Duration(100) * time.Millisecond
+	err = cli.ContainerStop(context.Background(), contID, &stopTime)
+	if err != nil {
+		fmt.Println("ERROR: can't stop container")
+	}
+	fmt.Printf("id: %v, stopped?/n", contID)
 
 }
