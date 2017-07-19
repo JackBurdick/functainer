@@ -44,7 +44,7 @@ func main() {
 	defer dockerBuildContext.Close()
 	//defaultHeaders := map[string]string{"User-Agent": ""}
 
-	buildOptions := types.ImageBuildOptions{}
+	buildOptions := types.ImageBuildOptions{Tags: []string{"jackburdick/test"}}
 
 	buildResponse, err := cli.ImageBuild(context.Background(), dockerBuildContext, buildOptions)
 	if err != nil {
