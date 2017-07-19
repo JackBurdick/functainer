@@ -104,6 +104,13 @@ func main() {
 	if err != nil {
 		fmt.Println("ERROR: can't stop container")
 	}
-	fmt.Printf("id: %v, stopped?/n", contID)
+	fmt.Printf("id: %v, stopped?\n", contID)
+
+	// TODO: Weigh the advantages of using the `force: true` flag here
+	err = cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{})
+	if err != nil {
+		fmt.Println("ERROR: can't remove container")
+	}
+	fmt.Printf("id: %v, removed?\n", contID)
 
 }
