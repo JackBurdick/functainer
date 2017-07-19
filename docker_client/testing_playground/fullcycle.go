@@ -113,6 +113,25 @@ func removeContainerByID(contID string, cli *client.Client) {
 
 }
 
+// buildContainerFromImage
+func deleteImageByTag(imgTag string, images []types.ImageSummary, cli *client.Client) {
+	// TODO: Can the image loop be removed?
+	for _, image := range images {
+		if strings.Join(image.RepoTags, "") == imgTag {
+			fmt.Printf("image.ID: %v\n", image.ID)
+
+			imgID := strings.TrimLeft(image.ID, "sha256")
+			imgID = strings.TrimLeft(imgID, ":")
+			deleteResponse, err := cli.ImageRemove(context.Background(), imgID, types.ImageRemoveOptions{})
+			if err != nil {
+				fmt.Printf("ERROR: image %v not deleted\n", imgID)
+			}
+			fmt.Printf("Image deleted: %v\n", imgID)
+			fmt.Println(deleteResponse)
+		}
+	}
+}
+
 func main() {
 
 	// Constants, these will hopefully eventually come from a YAML file.
@@ -154,20 +173,7 @@ func main() {
 	// Remove the container.
 	removeContainerByID(contID, cli)
 
-	// Delete the image
-	// TODO: Can the image loop be removed?
-	for _, image := range images {
-		if strings.Join(image.RepoTags, "") == imgTag {
-			fmt.Printf("image.ID: %v\n", image.ID)
+	// Delete the image.
+	deleteImageByTag(imgTag, images, cli)
 
-			imgID := strings.TrimLeft(image.ID, "sha256")
-			imgID = strings.TrimLeft(imgID, ":")
-			deleteResponse, err := cli.ImageRemove(context.Background(), imgID, types.ImageRemoveOptions{})
-			if err != nil {
-				fmt.Printf("ERROR: image %v not deleted\n", imgID)
-			}
-			fmt.Printf("Image deleted: %v\n", imgID)
-			fmt.Println(deleteResponse)
-		}
-	}
 }
