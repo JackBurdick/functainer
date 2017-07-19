@@ -33,27 +33,6 @@ func main() {
 		// Select specified image by the repo tag.
 		if strings.Join(image.RepoTags, "") == "jackburdick/cosineexp:latest" {
 
-			/*
-				exposedCadvPort := map[nat.Port]struct{}{"8080/tcp": {}}
-				configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedCadvPort}
-
-				portBindings := map[nat.Port][]nat.PortBinding{
-					"8080/tcp": {{HostIP: "0.0.0.0", HostPort: "8080"}}}
-
-				hostConfig := container.HostConfig{
-					PublishAllPorts: true,
-					PortBindings:    portBindings,
-				}
-
-				produces:
-					- 0.0.0.0:8080->8080/tcp
-
-				CONTAINER ID        IMAGE                          COMMAND                CREATED             STATUS              PORTS                    NAMES
-				ea494e9408a7        jackburdick/cosineexp:latest   "/bin/sh -c ./goapp"   2 minutes ago       Up 2 minutes        0.0.0.0:8080->8080/tcp   jacksss
-
-
-			*/
-
 			// look into this helper function
 			// portMap, bindingMap, err := nat.ParsePortSpecs([]string{"1234/tcp", "2345/udp"})
 
@@ -81,7 +60,6 @@ func main() {
 				fmt.Println(err)
 			}
 			contID = createResponse.ID
-
 		}
 	}
 
@@ -112,5 +90,22 @@ func main() {
 		fmt.Println("ERROR: can't remove container")
 	}
 	fmt.Printf("id: %v, removed?\n", contID)
+
+	// Delete image
+	// TODO: Can the image loop be removed?
+	for _, image := range images {
+		if strings.Join(image.RepoTags, "") == "jackburdick/cosineexp:latest" {
+			fmt.Printf("image.ID: %v\n", image.ID)
+
+			imgID := strings.TrimLeft(image.ID, "sha256")
+			imgID = strings.TrimLeft(imgID, ":")
+			deleteResponse, err := cli.ImageRemove(context.Background(), imgID, types.ImageRemoveOptions{})
+			if err != nil {
+				fmt.Printf("ERROR: image %v not deleted\n", imgID)
+			}
+			fmt.Printf("Image deleted: %v\n", imgID)
+			fmt.Println(deleteResponse)
+		}
+	}
 
 }
