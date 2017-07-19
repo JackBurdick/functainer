@@ -45,10 +45,8 @@ func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
 	}
 }
 
+// buildContainerFromImage builds the container from the image.
 func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *client.Client) (string, error) {
-	// Build container from image.
-	// Create the container from the image.
-
 	var contID string
 	for _, image := range images {
 
@@ -78,8 +76,8 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 	return contID, nil
 }
 
+// startContainerByID starts the container.
 func startContainerByID(contID string, cli *client.Client) {
-	// Start the container.
 	if contID != "" {
 		err := cli.ContainerStart(context.Background(), contID, types.ContainerStartOptions{})
 		if err != nil {
@@ -88,6 +86,20 @@ func startContainerByID(contID string, cli *client.Client) {
 	} else {
 		fmt.Println("Error: no container created")
 	}
+}
+
+// stopContainerByID stops the container.
+func stopContainerByID(contID string, cli *client.Client) {
+
+	// TODO: I have a stop time here, when the stoptime was nil, the processes
+	// took noticeably long.. I need to investigate what, if any, problems this
+	// causes.
+	stopTime := time.Duration(100) * time.Millisecond
+	err := cli.ContainerStop(context.Background(), contID, &stopTime)
+	if err != nil {
+		fmt.Println("ERROR: can't stop container")
+	}
+	fmt.Printf("id: %v, stopped?\n", contID)
 }
 
 func main() {
@@ -122,18 +134,11 @@ func main() {
 	// Build container and get container id.
 	contID, err := buildContainerFromImage(imgTag, images, cli)
 
+	// Start the container
 	startContainerByID(contID, cli)
 
-	// Stop the container
-	// TODO: I have a stop time here, when the stoptime was nil, the processes
-	// took noticeably long.. I need to investigate what, if any, problems this
-	// causes.
-	stopTime := time.Duration(100) * time.Millisecond
-	err = cli.ContainerStop(context.Background(), contID, &stopTime)
-	if err != nil {
-		fmt.Println("ERROR: can't stop container")
-	}
-	fmt.Printf("id: %v, stopped?\n", contID)
+	// Stop the container.
+	stopContainerByID(contID, cli)
 
 	// Remove the container.
 	// TODO: Weigh the advantages of using the `force: true` flag here
