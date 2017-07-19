@@ -102,6 +102,17 @@ func stopContainerByID(contID string, cli *client.Client) {
 	fmt.Printf("id: %v, stopped?\n", contID)
 }
 
+// removeContainerByID removes the container.
+func removeContainerByID(contID string, cli *client.Client) {
+	// TODO: Weigh the advantages of using the `force: true` flag here
+	err := cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{})
+	if err != nil {
+		fmt.Println("ERROR: can't remove container")
+	}
+	fmt.Printf("id: %v, removed?\n", contID)
+
+}
+
 func main() {
 
 	// Constants, these will hopefully eventually come from a YAML file.
@@ -141,12 +152,7 @@ func main() {
 	stopContainerByID(contID, cli)
 
 	// Remove the container.
-	// TODO: Weigh the advantages of using the `force: true` flag here
-	err = cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{})
-	if err != nil {
-		fmt.Println("ERROR: can't remove container")
-	}
-	fmt.Printf("id: %v, removed?\n", contID)
+	removeContainerByID(contID, cli)
 
 	// Delete the image
 	// TODO: Can the image loop be removed?
