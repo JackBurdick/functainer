@@ -8,18 +8,32 @@
 - I'll look into a dropbox/pocket/drive folder for dumping ideas
 
 
-### Initial Plan
-1. Develop useful function
-2. Containerize function
-3. Call function from w/in program
-    - local
-        - command line interface?
-        - kublet?
-    - API
-        - severless?
-            - aws lambda?
-4. Reflect
+### In Progress/Future
+1. Control Docker container
+    - run cycle
+        - [build image?]
+        - start when called
+        - run
+        - shut down
+        - [tear down image?]
+2. Config file
+    - specifications
+        - managing ports/"pipeline"
+    - building
+3. dataduit wrapper
+    - [dataduit container (API)]<-->[function(s)]
+        - main "API"
+            - traffic routed from program, through here, to functions
 
+### Stretch considerations
+1. Function scaling?
+    - scale up testing functions when applicable?
+2. Helpers for sending "lots" of data over the line -- multiple gzips
+    - theory
+        - shard set
+        - sent in pieces
+        - rebuild
+    
 
 ### Currently have
 - dataduit.com
