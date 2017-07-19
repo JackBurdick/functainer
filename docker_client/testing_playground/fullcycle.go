@@ -78,6 +78,18 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 	return contID, nil
 }
 
+func startContainerByID(contID string, cli *client.Client) {
+	// Start the container.
+	if contID != "" {
+		err := cli.ContainerStart(context.Background(), contID, types.ContainerStartOptions{})
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("Error: no container created")
+	}
+}
+
 func main() {
 
 	// Constants, these will hopefully eventually come from a YAML file.
@@ -110,15 +122,7 @@ func main() {
 	// Build container and get container id.
 	contID, err := buildContainerFromImage(imgTag, images, cli)
 
-	// Start the container.
-	if contID != "" {
-		err = cli.ContainerStart(context.Background(), contID, types.ContainerStartOptions{})
-		if err != nil {
-			fmt.Println(err)
-		}
-	} else {
-		fmt.Println("Error: no container created")
-	}
+	startContainerByID(contID, cli)
 
 	// Stop the container
 	// TODO: I have a stop time here, when the stoptime was nil, the processes
