@@ -29,7 +29,6 @@ func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, err
 
 // buildImageFromTar creates the tar of the Dockerfile and directory.
 func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
-	// Build image from .tar file.
 	dockerBuildContext, err := os.Open(tarPath)
 	defer dockerBuildContext.Close()
 	buildOptions := types.ImageBuildOptions{Tags: []string{imgHandle}}
@@ -38,44 +37,18 @@ func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
 		fmt.Printf("%s\n", err.Error())
 	}
 
-	// This needs to be here to ensure the image is built before we start/run it.
+	// NOTE: This needs to be here to ensure the image is built before we
+	// start/run it. There is likely a more elegant way to handle this.
 	_, err = ioutil.ReadAll(buildResponse.Body)
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
 	}
 }
 
-func main() {
-
-	// Constants, these will hopefully eventually come from a YAML file.
-	imgHandle := "jackburdick/automated"
-	imgTag := imgHandle + ":latest"
-	pathToDockerfile := "../../CaaF/Experimental/container/"
-	pathToCreatedTarDir := "./test_arch/archieve"
-
-	// Create tar.
-	tarPath, err := createTar(pathToCreatedTarDir, pathToDockerfile)
-	if err != nil {
-		fmt.Printf("Unable to create tar: %v", err)
-	}
-
-	// Create docker cli environment.
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		panic(err)
-	}
-
-	// Build image from the tar file.
-	buildImageFromTar(tarPath, imgHandle, cli)
-
+func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *client.Client) (string, error) {
 	// Build container from image.
-	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
-	if err != nil {
-		panic(err)
-	}
-
 	// Create the container from the image.
-	// TODO: see if I can do this without the loop.
+
 	var contID string
 	for _, image := range images {
 
@@ -102,6 +75,40 @@ func main() {
 			contID = createResponse.ID
 		}
 	}
+	return contID, nil
+}
+
+func main() {
+
+	// Constants, these will hopefully eventually come from a YAML file.
+	imgHandle := "jackburdick/automated"
+	imgTag := imgHandle + ":latest"
+	pathToDockerfile := "../../CaaF/Experimental/container/"
+	pathToCreatedTarDir := "./test_arch/archieve"
+
+	// Create tar.
+	tarPath, err := createTar(pathToCreatedTarDir, pathToDockerfile)
+	if err != nil {
+		fmt.Printf("Unable to create tar: %v", err)
+	}
+
+	// Create docker cli environment.
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+
+	// Build image from the tar file.
+	buildImageFromTar(tarPath, imgHandle, cli)
+
+	// TODO: see if I can do this without the loop.
+	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	// Build container and get container id.
+	contID, err := buildContainerFromImage(imgTag, images, cli)
 
 	// Start the container.
 	if contID != "" {
