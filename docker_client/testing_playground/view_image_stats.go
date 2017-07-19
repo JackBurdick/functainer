@@ -21,6 +21,8 @@ func main() {
 	}
 
 	for _, image := range images {
+
+		// Select specified image by the repo tag.
 		if strings.Join(image.RepoTags, "") == "jackburdick/cosineexp:latest" {
 			fmt.Printf("Command: %v\n", image.Containers)
 			fmt.Printf("Created: %v\n", image.Created)
