@@ -18,6 +18,19 @@ import (
 	"github.com/jhoonb/archivex"
 )
 
+// createTar creates a tar of the Dockerfile directory.
+func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
+	tar := new(archivex.TarFile)
+	tar.Create(pathToCreatedTarDir)
+	tar.AddAll(pathToDockerfile, false)
+	tar.Close()
+	return pathToCreatedTarDir + ".tar", nil
+}
+
+func buildImageFromTar() {
+
+}
+
 func main() {
 
 	// Constants, these will hopefully eventually come from a YAML file.
@@ -26,20 +39,20 @@ func main() {
 	pathToDockerfile := "../../CaaF/Experimental/container/"
 	pathToCreatedTarDir := "./test_arch/archieve"
 
+	// Create tar.
+	tarPath, err := createTar(pathToCreatedTarDir, pathToDockerfile)
+	if err != nil {
+		fmt.Printf("Unable to create tar: %v", err)
+	}
+
 	// Create docker cli environment.
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		panic(err)
 	}
 
-	// Create tar of the Dockerfile directory.
-	tar := new(archivex.TarFile)
-	tar.Create(pathToCreatedTarDir)
-	tar.AddAll(pathToDockerfile, false)
-	tar.Close()
-
 	// Build image from .tar file.
-	dockerBuildContext, err := os.Open(pathToCreatedTarDir + ".tar")
+	dockerBuildContext, err := os.Open(tarPath)
 	defer dockerBuildContext.Close()
 	buildOptions := types.ImageBuildOptions{Tags: []string{imgHandle}}
 	buildResponse, err := cli.ImageBuild(context.Background(), dockerBuildContext, buildOptions)
