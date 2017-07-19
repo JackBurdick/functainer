@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 )
 
 func main() {
@@ -31,11 +32,42 @@ func main() {
 		// Select specified image by the repo tag.
 		if strings.Join(image.RepoTags, "") == "jackburdick/cosineexp:latest" {
 
-			// Create container from image
-			//cli.ContainerCreate(context.Background())
-			configOptions := container.Config{Image: strings.Join(image.RepoTags, "")}
-			hostConfig := container.HostConfig{PublishAllPorts: true}
+			/*
+				exposedCadvPort := map[nat.Port]struct{}{"8080/tcp": {}}
+				configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedCadvPort}
+
+				portBindings := map[nat.Port][]nat.PortBinding{
+					"8080/tcp": {{HostIP: "0.0.0.0", HostPort: "8080"}}}
+
+				hostConfig := container.HostConfig{
+					PublishAllPorts: true,
+					PortBindings:    portBindings,
+				}
+
+				produces:
+					- 0.0.0.0:8080->8080/tcp
+
+				CONTAINER ID        IMAGE                          COMMAND                CREATED             STATUS              PORTS                    NAMES
+				ea494e9408a7        jackburdick/cosineexp:latest   "/bin/sh -c ./goapp"   2 minutes ago       Up 2 minutes        0.0.0.0:8080->8080/tcp   jacksss
+
+
+			*/
+
+			// look into this helper function
+			// portMap, bindingMap, err := nat.ParsePortSpecs([]string{"1234/tcp", "2345/udp"})
+
+			exposedCadvPort := map[nat.Port]struct{}{"8080/tcp": {}}
+			configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedCadvPort}
+
 			networkConfig := network.NetworkingConfig{}
+
+			portBindings := map[nat.Port][]nat.PortBinding{
+				"8080/tcp": {{HostIP: "0.0.0.0", HostPort: "8080"}}}
+
+			hostConfig := container.HostConfig{
+				PublishAllPorts: true,
+				PortBindings:    portBindings,
+			}
 
 			// TODO: Devise a progamatic way of producting a container name.
 			containerName := "jacksss"
@@ -43,8 +75,6 @@ func main() {
 			if err != nil {
 				fmt.Println(err)
 			}
-			// fmt.Printf("createResponse: %v", createResponse)
-			// fmt.Printf("err: %v", err)
 			contID = createResponse.ID
 		}
 	}
