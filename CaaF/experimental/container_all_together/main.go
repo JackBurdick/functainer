@@ -35,6 +35,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", curTime)
 }
 
+// cosineSim is the wrapper for the cosineSimilarity functionality.
 func cosineSim(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: This needs to be looked at more closely
@@ -59,7 +60,7 @@ func cosineSim(w http.ResponseWriter, r *http.Request) {
 		log.Printf("unable to read data gzip data: %v\n", err)
 	}
 
-	// Call main implementation function.
+	// Call main implementation function passing the data as a JSON object.
 	fNameToCosSim, err := CosineSimilarity(JSONData)
 	if err != nil {
 		log.Printf("Unable to calculate cosineSimilarity: %v", err)
