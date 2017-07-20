@@ -12,6 +12,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
@@ -57,7 +58,9 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 			// TODO: Devise a progamatic way of producting a container name.
 			// I'm not even sure if the container name is assigned right now.
 			exposedPort := map[nat.Port]struct{}{"8080/tcp": {}}
-			configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedPort}
+			jack := make(map[string]string)
+			jack["slippery"] = "fish"
+			configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedPort, Labels: jack}
 			networkConfig := network.NetworkingConfig{}
 			portBindings := map[nat.Port][]nat.PortBinding{
 				"8080/tcp": {{HostIP: "127.0.0.1", HostPort: "8000"}}}
@@ -171,7 +174,25 @@ func main() {
 	// Delete the image.
 	deleteImageByTag(imgTag, images, cli)
 
-	// need to prune old image.
+	// Prune container.
 	//cli.ContainersPrune()
+	// jack := make(map[string]string)
+	// jack["slippery"] = "fish"
+	cPruneFilter := filters.NewArgs()
+	//cPruneFilter.Add("label", "slippery=fish")
+	//cPruneFilter.Add("dangling", "true")
+	cPruneResult, err := cli.ContainersPrune(context.Background(), cPruneFilter)
+	if err != nil {
+		fmt.Printf("Error prune container: %v\n", err)
+	}
+	fmt.Println(cPruneResult)
+
+	// Prune image.
+	//cli.ImagesPrune()
+	iPruneResult, err := cli.ImagesPrune(context.Background(), cPruneFilter)
+	if err != nil {
+		fmt.Printf("Error prune container: %v\n", err)
+	}
+	fmt.Println(iPruneResult)
 
 }
