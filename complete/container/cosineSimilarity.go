@@ -1,5 +1,17 @@
 package main
 
+/*
+	This is the main functionality.
+
+	Models, in any language, will eventually live in a file like this that
+	accept an input and return the specified output.
+
+	The input and output will likely have to be standardized at least partially
+	- right now json is the standardization winner in my mind.
+
+
+*/
+
 import (
 	"encoding/json"
 	"fmt"
@@ -9,7 +21,7 @@ import (
 	"strings"
 )
 
-// createSetFromJson
+// createSetFromJson creates a set (map) from a `.json` the file.
 func createSetFromJSON(jsonPath string) map[string]bool {
 	file, err := ioutil.ReadFile(jsonPath)
 	if err != nil {
