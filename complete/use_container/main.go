@@ -48,6 +48,9 @@ const hostPort string = "8000"
 // containerName is the name of the created container
 const containerName string = "dunnoman"
 
+// Input data (directory of files to compare)
+const inputDir string = "./input/"
+
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
 	tar := new(archivex.TarFile)
@@ -209,9 +212,6 @@ func main() {
 	startContainerByID(cntx, contID, cli)
 
 	// ----------------------------------- use container
-
-	// Input data (directory of files to compare)
-	inputDir := "./input/"
 
 	// URL endpoints.
 	URL := "http://" + hostIP + ":" + hostPort + "/cosineSim"
