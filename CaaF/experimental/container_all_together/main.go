@@ -31,14 +31,11 @@ func main() {
 // handler is the main handler and returns the current time.
 // NOTE: This is included for demo purposes only.
 func handler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("inside handler\n")
-	fmt.Fprintf(w, "%s", "jack")
 	curTime := time.Now()
 	fmt.Fprintf(w, "%s", curTime)
 }
 
 func cosineSim(w http.ResponseWriter, r *http.Request) {
-	log.Printf("inside cosineSim\n")
 
 	// TODO: This needs to be looked at more closely
 	// - does the default case work?
@@ -55,24 +52,18 @@ func cosineSim(w http.ResponseWriter, r *http.Request) {
 	default:
 		reader = r.Body
 	}
-	log.Printf("after gzip\n")
 
 	// Read in data from gzip reader.
 	JSONData, err := ioutil.ReadAll(reader)
 	if err != nil {
 		log.Printf("unable to read data gzip data: %v\n", err)
-		fmt.Printf("unable to read data: %v", err)
-		fmt.Fprintf(w, "unable to read data: %v", err)
 	}
-	log.Printf("after read JSON data\n")
 
 	// Call main implementation function.
 	fNameToCosSim, err := CosineSimilarity(JSONData)
 	if err != nil {
 		log.Printf("Unable to calculate cosineSimilarity: %v", err)
-		fmt.Fprintf(w, "Unable to calculate cosineSimilarity: %v", err)
 	}
 	fmt.Fprintf(w, "Success: Cosine map: %v", fNameToCosSim)
-	log.Printf("Success: Cosine map: %v", fNameToCosSim)
 
 }
