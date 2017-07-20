@@ -1,7 +1,19 @@
 # Dataduit
 
-## Note
-- switching to edge build of docker for windows since I need the latest update for parsing the ID
+## Included
+Working Directory
+- `./Complete/`
+    - `./container/`
+        - Holds the main functionality
+    - `./use_container/`
+        - Calls the container function (`./container/`)
+Experimental
+- Experimental scripts and files are held in this directory
+    - `./CaaF/`
+    - `docker_client`
+
+### Note
+- latest docker build may be needed
     - information here: https://github.com/moby/moby/issues/33946
 
 ### Links
@@ -10,20 +22,12 @@
 ### Useful Resources
 - I'll look into a dropbox/pocket/drive folder for dumping ideas
 
-
 ### In Progress/Future
-1. Control Docker container
-    - run cycle
-        - [build image?]
-        - start when called
-        - run
-        - shut down
-        - [tear down image?]
-2. Config file
+1. Config file
     - specifications
         - managing ports/"pipeline"
     - building
-3. dataduit wrapper
+2. dataduit wrapper
     - [dataduit container (API)]<-->[function(s)]
         - main "API"
             - traffic routed from program, through here, to functions
