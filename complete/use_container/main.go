@@ -38,6 +38,10 @@ import (
 // 				-- sets up ports
 const pathToDockerfile string = "../container/"
 
+// hostIP is the specified IP to host the container
+// a helper could be used to set this up on a cloud provider
+const hostIP string = "127.0.0.1"
+
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
 	tar := new(archivex.TarFile)
@@ -86,7 +90,7 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 			configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedPort, Labels: jack}
 			networkConfig := network.NetworkingConfig{}
 			portBindings := map[nat.Port][]nat.PortBinding{
-				"8080/tcp": {{HostIP: "127.0.0.1", HostPort: "8000"}}}
+				"8080/tcp": {{HostIP: hostIP, HostPort: "8000"}}}
 			hostConfig := container.HostConfig{
 				PublishAllPorts: true,
 				PortBindings:    portBindings,
