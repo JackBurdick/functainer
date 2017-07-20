@@ -42,6 +42,12 @@ const pathToDockerfile string = "../container/"
 // a helper could be used to set this up on a cloud provider
 const hostIP string = "127.0.0.1"
 
+// hostPort is the port that is exposed to the user/can be called from the API
+const hostPort string = "8000"
+
+// containerName is the name of the created container
+const containerName string = "dunnoman"
+
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
 	tar := new(archivex.TarFile)
@@ -90,12 +96,12 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 			configOptions := container.Config{Image: strings.Join(image.RepoTags, ""), ExposedPorts: exposedPort, Labels: jack}
 			networkConfig := network.NetworkingConfig{}
 			portBindings := map[nat.Port][]nat.PortBinding{
-				"8080/tcp": {{HostIP: hostIP, HostPort: "8000"}}}
+				"8080/tcp": {{HostIP: hostIP, HostPort: hostPort}}}
 			hostConfig := container.HostConfig{
 				PublishAllPorts: true,
 				PortBindings:    portBindings,
 			}
-			containerName := "dunnoman"
+
 			createResponse, err := cli.ContainerCreate(context.Background(), &configOptions, &hostConfig, &networkConfig, containerName)
 			if err != nil {
 				fmt.Println(err)
