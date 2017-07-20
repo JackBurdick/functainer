@@ -22,6 +22,7 @@ import (
 	"github.com/jhoonb/archivex"
 )
 
+// NOTE: contant naming maybe should include a `dd` prefx?
 // Constants, these will hopefully eventually come from a YAML/JSON file.
 // pathToDockerfile is a path to the "dataduit" that will be build;
 // necessary components are;
@@ -55,8 +56,9 @@ const containerName string = "dunnoman"
 const inputDir string = "./input/"
 
 // imgHandle is the name of the created image
-// TODO: this should be <username>/<name>
-const imgHandle string = "jackburdick/automated"
+const userName string = "jackburdick"
+const imgName string = "automated"
+const imgHandle string = userName + imgName
 
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
@@ -185,6 +187,9 @@ func main() {
 	// tag may be needed for grabbing the image, but I don't think it's needed
 	// for creating the image.
 	imgTag := imgHandle + ":latest"
+
+	// TODO: this could be sent to a temp directory and should also maybe be
+	// deleted after use.
 	pathToCreatedTarDir := "./archive/archive"
 
 	// Create tar.
