@@ -54,6 +54,10 @@ const containerName string = "dunnoman"
 // Input data (directory of files to compare).
 const inputDir string = "./input/"
 
+// imgHandle is the name of the created image
+// TODO: this should be <username>/<name>
+const imgHandle string = "jackburdick/automated"
+
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
 	tar := new(archivex.TarFile)
@@ -176,7 +180,10 @@ func deleteImageByTag(cntx context.Context, imgTag string, images []types.ImageS
 
 // main creates and uses the container.
 func main() {
-	imgHandle := "jackburdick/automated"
+
+	// TODO: is there a better way to handle this? There likely is, the latest
+	// tag may be needed for grabbing the image, but I don't think it's needed
+	// for creating the image.
 	imgTag := imgHandle + ":latest"
 	pathToCreatedTarDir := "./archive/archive"
 
@@ -245,7 +252,7 @@ func main() {
 
 	// Create http request to container. (using JSON+gzip)
 	/*
-		NOTE: if sending plain json, this was working
+		NOTE: if sending plain json, this works;
 			- req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
 	*/
 
