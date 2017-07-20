@@ -61,11 +61,11 @@ func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, err
 // NOTE: the required files need to be placed in the root of the directory where
 // the Dockerfile is located `pathToDockerfile`.  The current implementation
 // does not support the addition of directories.
-func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
+func buildImageFromTar(cntx context.Context, tarPath string, imgHandle string, cli *client.Client) {
 	dockerBuildContext, err := os.Open(tarPath)
 	defer dockerBuildContext.Close()
 	buildOptions := types.ImageBuildOptions{Tags: []string{imgHandle}}
-	buildResponse, err := cli.ImageBuild(context.Background(), dockerBuildContext, buildOptions)
+	buildResponse, err := cli.ImageBuild(cntx, dockerBuildContext, buildOptions)
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
 	}
@@ -80,7 +80,7 @@ func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
 
 // buildContainerFromImage builds the container from the image and returns the
 // created container id.
-func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *client.Client) (string, error) {
+func buildContainerFromImage(cntx context.Context, imgTag string, images []types.ImageSummary, cli *client.Client) (string, error) {
 	var contID string
 	for _, image := range images {
 
@@ -103,7 +103,7 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 				PortBindings:    portBindings,
 			}
 
-			createResponse, err := cli.ContainerCreate(context.Background(), &configOptions, &hostConfig, &networkConfig, containerName)
+			createResponse, err := cli.ContainerCreate(cntx, &configOptions, &hostConfig, &networkConfig, containerName)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -114,9 +114,9 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 }
 
 // startContainerByID starts the container by the specified container id.
-func startContainerByID(contID string, cli *client.Client) {
+func startContainerByID(cntx context.Context, contID string, cli *client.Client) {
 	if contID != "" {
-		err := cli.ContainerStart(context.Background(), contID, types.ContainerStartOptions{})
+		err := cli.ContainerStart(cntx, contID, types.ContainerStartOptions{})
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -126,23 +126,23 @@ func startContainerByID(contID string, cli *client.Client) {
 }
 
 // stopContainerByID stops the container by the specified container id.
-func stopContainerByID(contID string, cli *client.Client) {
+func stopContainerByID(cntx context.Context, contID string, cli *client.Client) {
 
 	// TODO: I have a stop time here, when the stoptime was nil, the processes
 	// took noticeably long.. I need to investigate what, if any, problems this
 	// causes.
 	stopTime := time.Duration(100) * time.Millisecond
-	err := cli.ContainerStop(context.Background(), contID, &stopTime)
+	err := cli.ContainerStop(cntx, contID, &stopTime)
 	if err != nil {
 		fmt.Println("ERROR: can't stop container")
 	}
 }
 
 // removeContainerByID removes the container by the specified container id.
-func removeContainerByID(contID string, cli *client.Client) {
+func removeContainerByID(cntx context.Context, contID string, cli *client.Client) {
 
 	// TODO: Weigh the advantages of using the `Force: true` flag here
-	err := cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{Force: true})
+	err := cli.ContainerRemove(cntx, contID, types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		fmt.Println("ERROR: can't remove container")
 	}
@@ -150,7 +150,7 @@ func removeContainerByID(contID string, cli *client.Client) {
 
 // buildContainerFromImage accepts a list of the current images and the
 // specified image tag. If the image is present, the image is removed.
-func deleteImageByTag(imgTag string, images []types.ImageSummary, cli *client.Client) {
+func deleteImageByTag(cntx context.Context, imgTag string, images []types.ImageSummary, cli *client.Client) {
 
 	// TODO: Errors should be handled/returned.
 	// TODO: Can the image loop be removed?
@@ -160,7 +160,7 @@ func deleteImageByTag(imgTag string, images []types.ImageSummary, cli *client.Cl
 			imgID = strings.TrimLeft(imgID, ":")
 
 			// TODO: Weigh the advantages of using the `Force: true` flag here
-			_, err := cli.ImageRemove(context.Background(), imgID, types.ImageRemoveOptions{})
+			_, err := cli.ImageRemove(cntx, imgID, types.ImageRemoveOptions{})
 			if err != nil {
 				fmt.Printf("ERROR: image %v not deleted\n", imgID)
 			}
@@ -186,23 +186,27 @@ func main() {
 		panic(err)
 	}
 
+	// TODO: look into this variable. Though it is being used "correctly", I'm
+	// not sure of its details.
+	cntx := context.Background()
+
 	// Build image from the tar file.
-	buildImageFromTar(tarPath, imgHandle, cli)
+	buildImageFromTar(cntx, tarPath, imgHandle, cli)
 
 	// TODO: see if I can do this without the loop.
-	images, err := cli.ImageList(context.Background(), types.ImageListOptions{})
+	images, err := cli.ImageList(cntx, types.ImageListOptions{})
 	if err != nil {
 		panic(err)
 	}
 
 	// Build container and get container id.
-	contID, err := buildContainerFromImage(imgTag, images, cli)
+	contID, err := buildContainerFromImage(cntx, imgTag, images, cli)
 	if err != nil {
 		fmt.Printf("error > build container: %v\n", err)
 	}
 
 	// Start the container
-	startContainerByID(contID, cli)
+	startContainerByID(cntx, contID, cli)
 
 	// ----------------------------------- use container
 
@@ -259,7 +263,6 @@ func main() {
 	defer resp.Body.Close()
 
 	// Read response.
-
 	if resp.StatusCode == http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
 		fmt.Println("Response:", string(body))
@@ -278,13 +281,13 @@ func main() {
 	// ----------------- stop container
 
 	// Stop the container.
-	stopContainerByID(contID, cli)
+	stopContainerByID(cntx, contID, cli)
 
 	// Remove the container.
-	removeContainerByID(contID, cli)
+	removeContainerByID(cntx, contID, cli)
 
 	// Delete the image.
-	deleteImageByTag(imgTag, images, cli)
+	deleteImageByTag(cntx, imgTag, images, cli)
 
 	// Prune container.
 	// jack := make(map[string]string)
@@ -292,13 +295,13 @@ func main() {
 	cPruneFilter := filters.NewArgs()
 	//cPruneFilter.Add("label", "slippery=fish")
 	//cPruneFilter.Add("dangling", "true")
-	_, err = cli.ContainersPrune(context.Background(), cPruneFilter)
+	_, err = cli.ContainersPrune(cntx, cPruneFilter)
 	if err != nil {
 		fmt.Printf("Error prune container: %v\n", err)
 	}
 
 	// Prune image.
-	_, err = cli.ImagesPrune(context.Background(), cPruneFilter)
+	_, err = cli.ImagesPrune(cntx, cPruneFilter)
 	if err != nil {
 		fmt.Printf("Error prune container: %v\n", err)
 	}
