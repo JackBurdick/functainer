@@ -1,4 +1,20 @@
-## Experimental directory to call CaaF
+# Experimental directory to call CaaF
+
+## Known issues
+- All containers are pruned
+    - target filter is not working as expected
+- All images are pruned
+    - target filter is not working as expected
+- Unable to marshal the response from plain text -> JSON -> MAP
+
+### Look into
+- gzip return data?
+- only use gzip if above a threshold?
+- archivex does not support tar (sub)directories
+    - can the standard lib be used instead?
+- api functionality
+    - move api to wrapper?
+        - stuct/method calls?
 
 ## Use
 To run;
