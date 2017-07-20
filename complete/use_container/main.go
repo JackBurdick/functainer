@@ -90,6 +90,7 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 			// Create the container from the image.
 			// TODO: Devise a progamatic way of producting a container name.
 			// I'm not even sure if the container name is assigned right now.
+			// TODO: Determine how exposedPort and port Bindings are different.
 			exposedPort := map[nat.Port]struct{}{"8080/tcp": {}}
 			jack := make(map[string]string)
 			jack["slippery"] = "fish"
@@ -209,8 +210,8 @@ func main() {
 	inputDir := "./input/"
 
 	// URL endpoints.
-	URL := "http://localhost:8000/cosineSim"
-	//URL := "http://localhost:8000/"
+	URL := "http://" + hostIP + ":" + hostPort + "/cosineSim"
+	//URL := "http://" + hostIP + ":" + hostPort + "/"
 
 	// Create map from input directory.
 	fileMap, err := createMap(inputDir)
@@ -258,7 +259,8 @@ func main() {
 	defer resp.Body.Close()
 
 	// Read response.
-	if resp.StatusCode == 200 {
+
+	if resp.StatusCode == http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
 		fmt.Println("Response:", string(body))
 
