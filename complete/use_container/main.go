@@ -38,17 +38,20 @@ import (
 // 				-- sets up ports
 const pathToDockerfile string = "../container/"
 
-// hostIP is the specified IP to host the container
-// a helper could be used to set this up on a cloud provider
+// hostIP is the specified IP to host the container.
+// LOOKINTO: a helper could be used to set this up on a cloud provider.
 const hostIP string = "127.0.0.1"
 
-// hostPort is the port that is exposed to the user/can be called from the API
+// hostPort is the port that is exposed to the user/can be called from the API.
 const hostPort string = "8000"
 
-// containerName is the name of the created container
+// endPointName is the API endpoint used.
+const endPointName string = "cosineSim"
+
+// containerName is the name of the created container.
 const containerName string = "dunnoman"
 
-// Input data (directory of files to compare)
+// Input data (directory of files to compare).
 const inputDir string = "./input/"
 
 // createTar creates a tar of the Dockerfile directory.
@@ -214,7 +217,7 @@ func main() {
 	// ----------------------------------- use container
 
 	// URL endpoints.
-	URL := "http://" + hostIP + ":" + hostPort + "/cosineSim"
+	URL := "http://" + hostIP + ":" + hostPort + "/" + endPointName
 	//URL := "http://" + hostIP + ":" + hostPort + "/"
 
 	// Create map from input directory.
