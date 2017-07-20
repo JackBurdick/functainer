@@ -22,6 +22,8 @@ import (
 	"github.com/jhoonb/archivex"
 )
 
+const pathToDockerfile string = "../container/"
+
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
 	tar := new(archivex.TarFile)
@@ -136,7 +138,6 @@ func main() {
 	// Constants, these will hopefully eventually come from a YAML file.
 	imgHandle := "jackburdick/automated"
 	imgTag := imgHandle + ":latest"
-	pathToDockerfile := "../container/"
 	pathToCreatedTarDir := "./archive/archive"
 
 	// Create tar.
