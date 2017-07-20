@@ -22,6 +22,20 @@ import (
 	"github.com/jhoonb/archivex"
 )
 
+// Constants, these will hopefully eventually come from a YAML/JSON file.
+// pathToDockerfile is a path to the "dataduit" that will be build;
+// necessary components are;
+// - model
+//		-- the input type needs to be standardized (json?)
+// - Dockerfile
+// 		- builds container
+// - required files/fixtures
+//		-- for example, in cosineSimilarity stopwords+punctuation
+// - API (main.go)
+// 		- This will likely become the main `dataduit` wrapper
+//			-- calls main function
+//			-- builds+starts+runs+stops+removes container
+// 				-- sets up ports
 const pathToDockerfile string = "../container/"
 
 // createTar creates a tar of the Dockerfile directory.
@@ -34,6 +48,9 @@ func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, err
 }
 
 // buildImageFromTar creates the tar of the Dockerfile and directory.
+// NOTE: the required files need to be placed in the root of the directory where
+// the Dockerfile is located `pathToDockerfile`.  The current implementation
+// does not support the addition of directories.
 func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
 	dockerBuildContext, err := os.Open(tarPath)
 	defer dockerBuildContext.Close()
@@ -51,7 +68,8 @@ func buildImageFromTar(tarPath string, imgHandle string, cli *client.Client) {
 	}
 }
 
-// buildContainerFromImage builds the container from the image.
+// buildContainerFromImage builds the container from the image and returns the
+// created container id.
 func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *client.Client) (string, error) {
 	var contID string
 	for _, image := range images {
@@ -84,7 +102,7 @@ func buildContainerFromImage(imgTag string, images []types.ImageSummary, cli *cl
 	return contID, nil
 }
 
-// startContainerByID starts the container.
+// startContainerByID starts the container by the specified container id.
 func startContainerByID(contID string, cli *client.Client) {
 	if contID != "" {
 		err := cli.ContainerStart(context.Background(), contID, types.ContainerStartOptions{})
@@ -96,7 +114,7 @@ func startContainerByID(contID string, cli *client.Client) {
 	}
 }
 
-// stopContainerByID stops the container.
+// stopContainerByID stops the container by the specified container id.
 func stopContainerByID(contID string, cli *client.Client) {
 
 	// TODO: I have a stop time here, when the stoptime was nil, the processes
@@ -109,22 +127,28 @@ func stopContainerByID(contID string, cli *client.Client) {
 	}
 }
 
-// removeContainerByID removes the container.
+// removeContainerByID removes the container by the specified container id.
 func removeContainerByID(contID string, cli *client.Client) {
-	// TODO: Weigh the advantages of using the `force: true` flag here
+
+	// TODO: Weigh the advantages of using the `Force: true` flag here
 	err := cli.ContainerRemove(context.Background(), contID, types.ContainerRemoveOptions{Force: true})
 	if err != nil {
 		fmt.Println("ERROR: can't remove container")
 	}
 }
 
-// buildContainerFromImage
+// buildContainerFromImage accepts a list of the current images and the
+// specified image tag. If the image is present, the image is removed.
 func deleteImageByTag(imgTag string, images []types.ImageSummary, cli *client.Client) {
+
+	// TODO: Errors should be handled/returned.
 	// TODO: Can the image loop be removed?
 	for _, image := range images {
 		if strings.Join(image.RepoTags, "") == imgTag {
 			imgID := strings.TrimLeft(image.ID, "sha256")
 			imgID = strings.TrimLeft(imgID, ":")
+
+			// TODO: Weigh the advantages of using the `Force: true` flag here
 			_, err := cli.ImageRemove(context.Background(), imgID, types.ImageRemoveOptions{})
 			if err != nil {
 				fmt.Printf("ERROR: image %v not deleted\n", imgID)
@@ -133,9 +157,8 @@ func deleteImageByTag(imgTag string, images []types.ImageSummary, cli *client.Cl
 	}
 }
 
+// main creates and uses the container.
 func main() {
-
-	// Constants, these will hopefully eventually come from a YAML file.
 	imgHandle := "jackburdick/automated"
 	imgTag := imgHandle + ":latest"
 	pathToCreatedTarDir := "./archive/archive"
@@ -270,6 +293,10 @@ func main() {
 
 }
 
+// createMap is a helper that accepts a path to a directory and creates the
+// input data for the model.
+// NOTE: this may/may not be included in functionality.  It will likely fall on
+// the user to create the specified input data.
 func createMap(dPath string) (map[string][]string, error) {
 	fileMap := make(map[string][]string)
 
