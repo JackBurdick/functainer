@@ -172,7 +172,7 @@ func deleteImageByTag(cntx context.Context, imgTag string, images []types.ImageS
 			imgID = strings.TrimLeft(imgID, ":")
 
 			// TODO: Weigh the advantages of using the `Force: true` flag here
-			_, err := cli.ImageRemove(cntx, imgID, types.ImageRemoveOptions{})
+			_, err := cli.ImageRemove(cntx, imgID, types.ImageRemoveOptions{Force: true})
 			if err != nil {
 				fmt.Printf("ERROR: image %v not deleted\n", imgID)
 			}
@@ -304,18 +304,26 @@ func main() {
 	// Delete the image.
 	deleteImageByTag(cntx, imgTag, images, cli)
 
+	// TODO: I'm really unsure how to handle this pruning situation
+	// I don't want to prune any images not created by dataduit.
+	// The other problem here is that there is the 'multistage' building
+	// occuring, so I'm not sure how to make a label for the build stage image.
+	//timeString := "30s"
 	// Prune containers with the created label.
 	cPruneFilter := filters.NewArgs()
-	cPruneFilter.Add("label", "slippery:fish")
+	//cPruneFilter.Add("label", "slippery:fish")
+	//cPruneFilter.Add("until", timeString)
 	_, err = cli.ContainersPrune(cntx, cPruneFilter)
 	if err != nil {
 		fmt.Printf("Error prune container: %v\n", err)
 	}
 
 	// Prune image.
-	_, err = cli.ImagesPrune(cntx, cPruneFilter)
+	iPruneFilter := filters.NewArgs()
+	//iPruneFilter.Add("until", timeString)
+	_, err = cli.ImagesPrune(cntx, iPruneFilter)
 	if err != nil {
-		fmt.Printf("Error prune container: %v\n", err)
+		fmt.Printf("Error prune image: %v\n", err)
 	}
 
 }
