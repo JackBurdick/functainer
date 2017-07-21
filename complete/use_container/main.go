@@ -304,12 +304,9 @@ func main() {
 	// Delete the image.
 	deleteImageByTag(cntx, imgTag, images, cli)
 
-	// Prune container.
-	// jack := make(map[string]string)
-	// jack["slippery"] = "fish"
+	// Prune containers with the created label.
 	cPruneFilter := filters.NewArgs()
-	//cPruneFilter.Add("label", "slippery=fish")
-	//cPruneFilter.Add("dangling", "true")
+	cPruneFilter.Add("label", "slippery:fish")
 	_, err = cli.ContainersPrune(cntx, cPruneFilter)
 	if err != nil {
 		fmt.Printf("Error prune container: %v\n", err)
