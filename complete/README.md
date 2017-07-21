@@ -22,6 +22,18 @@ To run;
 2. Navigate to `./use_container/`
 3. `go run main.go`
 
+Working Directory
+- `./Complete/`
+    - `./dd_cosineSim/`
+        - Holds the main functionality / is meant to be modular
+        - to use, you must specify the path in `./use_container/main.go`
+    - `./use_container/`
+        - Calls the container function (`./<dd_container>/`)
+Experimental
+- Experimental scripts and files are held in this directory
+    - `./CaaF/`
+    - `docker_client`
+
 ### image information
 ```
 REPOSITORY                  TAG                 IMAGE ID            CREATED              SIZE
@@ -32,11 +44,8 @@ jackburdick/cosineexp       latest              a21e1999784a        About a minu
 ```golang
 
 // input information
-inputDir := "./input/"
 
 // URL endpoint to container function
-URL := "http://localhost:8080/cosineSim"
-
 
 // build JSON data
 //....

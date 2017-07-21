@@ -3,10 +3,11 @@
 ## Included
 Working Directory
 - `./Complete/`
-    - `./container/`
-        - Holds the main functionality
+    - `./dd_cosineSim/`
+        - Holds the main functionality / is meant to be modular
+        - to use, you must specify the path in `./use_container/main.go`
     - `./use_container/`
-        - Calls the container function (`./container/`)
+        - Calls the container function (`./<dd_container>/`)
 Experimental
 - Experimental scripts and files are held in this directory
     - `./CaaF/`

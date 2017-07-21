@@ -37,7 +37,7 @@ import (
 //			-- calls main function
 //			-- builds+starts+runs+stops+removes container
 // 				-- sets up ports
-const pathToDockerfile string = "../container/"
+const pathToDockerfile string = "../dd_cosineSim/"
 
 // hostIP is the specified IP to host the container.
 // LOOKINTO: a helper could be used to set this up on a cloud provider.
