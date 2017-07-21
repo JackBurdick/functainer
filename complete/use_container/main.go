@@ -79,14 +79,14 @@ func buildImageFromTar(cntx context.Context, tarPath string, imgHandle string, c
 	buildOptions := types.ImageBuildOptions{Tags: []string{imgHandle}}
 	buildResponse, err := cli.ImageBuild(cntx, dockerBuildContext, buildOptions)
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		fmt.Printf("%s\n", err)
 	}
 
 	// NOTE: This needs to be here to ensure the image is built before we
 	// start/run it. There is likely a more elegant way to handle this.
 	_, err = ioutil.ReadAll(buildResponse.Body)
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		fmt.Printf("%s\n", err)
 	}
 }
 
