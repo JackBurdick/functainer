@@ -1,2 +1,4 @@
 ---
+pets:
+  dog: "Diesel"
 name: "jack"

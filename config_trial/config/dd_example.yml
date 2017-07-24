@@ -1,0 +1,20 @@
+---
+# container specific
+pathToDockerfile: "../dd_sudokuSolver/"
+endPointName: "sudoku"
+
+# input specific
+inputPath: "./input_sudoku/puzzle_01.txt"
+
+# hostIP is the specified IP to host the container.
+hostIP: "127.0.0.1"
+
+# hostPort is the port that is exposed to the user/can be called from the API.
+hostPort: "8000"
+
+# containerName is the name of the created container.
+containerName: "dunnoman"
+
+# imgHandle is the name of the created image( userName + "/" + imgName )
+userName: "jackburdick"
+imgName: "automated"
