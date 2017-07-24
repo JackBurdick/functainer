@@ -18,9 +18,12 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/jdkato/prose/tokenize"
 	"github.com/jhoonb/archivex"
 )
+
+// TODO: need to rework the input methodology
+// -- I think the input "helper" should live it its own file and the input
+// type should be specified in the config file.
 
 // NOTE: contant naming maybe should include a `dd` prefx?
 // Constants, these will hopefully eventually come from a YAML/JSON file.
@@ -37,7 +40,23 @@ import (
 //			-- calls main function
 //			-- builds+starts+runs+stops+removes container
 // 				-- sets up ports
-const pathToDockerfile string = "../dd_cosineSim/"
+
+// -------------------------------------- dd_container specific.
+
+//const pathToDockerfile string = "../dd_cosineSim/"
+const pathToDockerfile string = "../dd_sudokuSolver/"
+
+// endPointName is the API endpoint used.
+//const endPointName string = "cosineSim"
+const endPointName string = "sudoku"
+
+// --------------------------------------- [END]dd_container specific
+
+// ------------------------------------------ Input specific
+// Input data (directory of files to compare).
+const inputPath string = "./input_sudoku/puzzle_01.txt"
+
+// ------------------------------------------ [END] Input specific
 
 // hostIP is the specified IP to host the container.
 // LOOKINTO: a helper could be used to set this up on a cloud provider.
@@ -46,19 +65,13 @@ const hostIP string = "127.0.0.1"
 // hostPort is the port that is exposed to the user/can be called from the API.
 const hostPort string = "8000"
 
-// endPointName is the API endpoint used.
-const endPointName string = "cosineSim"
-
 // containerName is the name of the created container.
 const containerName string = "dunnoman"
-
-// Input data (directory of files to compare).
-const inputDir string = "./input/"
 
 // imgHandle is the name of the created image
 const userName string = "jackburdick"
 const imgName string = "automated"
-const imgHandle string = userName + imgName
+const imgHandle string = userName + "/" + imgName
 
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
@@ -233,7 +246,8 @@ func main() {
 	//URL := "http://" + hostIP + ":" + hostPort + "/"
 
 	// Create map from input directory.
-	fileMap, err := createMap(inputDir)
+	// fileMap, err := createMap(inputDir)
+	fileMap, err := createSudokuInput(inputPath)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -328,24 +342,82 @@ func main() {
 
 }
 
+// ------------ Helper function related to loading data into dd_container fmt
+// TODO: this functionality is dd_container specific.
 // createMap is a helper that accepts a path to a directory and creates the
 // input data for the model.
 // NOTE: this may/may not be included in functionality.  It will likely fall on
 // the user to create the specified input data.
-func createMap(dPath string) (map[string][]string, error) {
-	fileMap := make(map[string][]string)
+// func createMap(dPath string) (map[string][]string, error) {
+// 	fileMap := make(map[string][]string)
 
-	// Create map of filename to tokenized content.
-	dFiles, _ := ioutil.ReadDir(dPath)
-	for _, f := range dFiles {
-		b, err := ioutil.ReadFile(dPath + f.Name())
-		if err != nil {
-			fmt.Println(err)
+// 	// Create map of filename to tokenized content.
+// 	dFiles, _ := ioutil.ReadDir(dPath)
+// 	for _, f := range dFiles {
+// 		b, err := ioutil.ReadFile(dPath + f.Name())
+// 		if err != nil {
+// 			fmt.Println(err)
+// 		}
+
+// 		// Convert bytes to string, then use 3rd party to tokenize.
+// 		fileMap[f.Name()] = tokenize.TextToWords(string(b))
+// 	}
+
+// 	return fileMap, nil
+// }
+
+// -------------------------------------------
+
+// crossIndex 'crosses' two strings such that the two individual values from
+// each string join together to create a new value.  For example, if string one
+// is "ABC" and string two is "123", the resulting return value will be;
+// ["A1","A2","A3","B1","B2","B3","C1","C2","C3"].
+func crossIndex(A string, N string) []string {
+	var ks []string
+	for _, a := range A {
+		for _, n := range N {
+			ks = append(ks, (string(a) + string(n)))
 		}
+	}
+	return ks
+}
 
-		// Convert bytes to string, then use 3rd party to tokenize.
-		fileMap[f.Name()] = tokenize.TextToWords(string(b))
+func createSudokuInput(fPath string) (map[string][]string, error) {
+	sudokuMap := make(map[string][]string)
+
+	data, err := ioutil.ReadFile(fPath)
+	if err != nil {
+		return sudokuMap, err
 	}
 
-	return fileMap, nil
+	// Global board information.  The Sudoku board is assumed to be a standard
+	// 9x9 (A-I)x(1-9) grid -- where the first index (upper left) would be `A1`
+	// and the last index (lower right) would be `I9`.
+	rows := "ABCDEFGHI"
+	cols := "123456789"
+	inds := crossIndex(rows, cols)
+
+	// Convert the string representing the board into a grid(map) that maps a
+	// key (index) to the values (label for the box, or possible label for the
+	// box). for instance, if we know A1=7, map['A1'] = '7', but if the given
+	// index is empty (B2, as an example), the corresponding value would be
+	// '123456789' (map['B2'] = '123456789') NOTE: i acts as an increment for
+	// every target character found.
+	i := 0
+	for _, c := range data {
+		switch string(c) {
+		case "_":
+			sudokuMap[inds[i]] = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"}
+			i++
+		case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+			sudokuMap[inds[i]] = []string{string(c)}
+			i++
+		case "\n", " ", "\r":
+			continue
+		default:
+			return sudokuMap, fmt.Errorf("unexpected value (%v) in Sudoku input", c)
+		}
+	}
+
+	return sudokuMap, nil
 }
