@@ -19,28 +19,28 @@ func main() {
 	// Confirm which config file is used
 	fmt.Printf("Using config: %s\n", viper.ConfigFileUsed())
 
-	pathToDockerfile := viper.Get("pathToDockerfile")
+	pathToDockerfile := viper.Get("model.ddDir")
 	fmt.Printf("pathToDockerfile: %v\n", pathToDockerfile)
 
-	endPointName := viper.Get("endPointName")
+	endPointName := viper.Get("network.host.endpoint")
 	fmt.Printf("endPointName: %v\n", endPointName)
 
-	inputPath := viper.Get("inputPath")
+	inputPath := viper.Get("input.file.path")
 	fmt.Printf("inputPath: %v\n", inputPath)
 
-	hostIP := viper.Get("hostIP")
+	hostIP := viper.Get("network.host.ip")
 	fmt.Printf("hostIP: %v\n", hostIP)
 
-	hostPort := viper.Get("hostPort")
+	hostPort := viper.Get("network.host.port")
 	fmt.Printf("hostPort: %v\n", hostPort)
 
-	containerName := viper.Get("containerName")
+	containerName := viper.Get("container.name")
 	fmt.Printf("containerName: %v\n", containerName)
 
-	userName := viper.Get("userName")
+	userName := viper.Get("container.image.user")
 	fmt.Printf("userName: %v\n", userName)
 
-	imgName := viper.Get("imgName")
+	imgName := viper.Get("container.image.img")
 	fmt.Printf("imgName: %v\n", imgName)
 
 	uN := fmt.Sprintf("%v", userName)

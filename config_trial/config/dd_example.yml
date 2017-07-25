@@ -1,20 +1,33 @@
 ---
-# container specific
-pathToDockerfile: "../dd_sudokuSolver/"
-endPointName: "sudoku"
+# path to the container creation file
+model:
+  ddDir: "../dd_sudokuSolver/"
+  
+# created container information
+# container.name is the name of the created container.
+# imgHandle is the name of the created image( userName + "/" + imgName )
+container:
+  name: "dunnoman"
+  image:
+    user: "jackburdick"
+    img: "automated"
 
 # input specific
-inputPath: "./input_sudoku/puzzle_01.txt"
+input:
+  file: 
+    path: "./input_sudoku/puzzle_01.txt"
 
-# hostIP is the specified IP to host the container.
-hostIP: "127.0.0.1"
+# network information
+# host.ip is the specified IP to host the container.
+# host.port is the port that is exposed to the user/can be called from the API.
+network:
+  host:
+    ip: "127.0.0.1"
+    port: "8000"
+    endpoint: "sudoku"
 
-# hostPort is the port that is exposed to the user/can be called from the API.
-hostPort: "8000"
+tar:
+  dir: "./archive/archive"
 
-# containerName is the name of the created container.
-containerName: "dunnoman"
 
-# imgHandle is the name of the created image( userName + "/" + imgName )
-userName: "jackburdick"
-imgName: "automated"
+
