@@ -243,9 +243,20 @@ func (dd *ddContainer) endDD() error {
 }
 
 // config, start, stop, end
-func (dd *ddContainer) fullCycleDD() error {
+func (dd *ddContainer) completeDD(inputPath string) (string, error) {
+	err := dd.startDD()
+	if err != nil {
+		fmt.Printf("Error starting container: %v\n", err)
+	}
 
-	return nil
+	res, err := dd.useDD(inputPath)
+	if err != nil {
+		fmt.Printf("Error using container: %v\n", err)
+	}
+	//fmt.Printf("Response: %v", res)
+
+	dd.endDD()
+	return res, nil
 }
 
 // createTar creates a tar of the Dockerfile directory.
@@ -390,16 +401,28 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
-	fmt.Printf("Response: %v", res)
+	fmt.Printf("Response A: %v\n", res)
+	fmt.Printf("\nDONE with multistage call\n\n")
 
 	dd.endDD()
 
 	// ----------- single call
-	// var jj ddContainer
-	// err = jj.configDD(configPath)
-	// if err != nil {
-	// 	fmt.Printf("Error with dd conf: %v\n", err)
-	// }
+	var jj ddContainer
+
+	// initialize
+	err = jj.configDD(configPath)
+	if err != nil {
+		fmt.Printf("Error with jj conf: %v\n", err)
+	}
+
+	// use
+	resB, err := jj.completeDD(inputPath)
+	if err != nil {
+		fmt.Printf("Error using container: %v\n", err)
+	}
+
+	// examine results
+	fmt.Printf("Response B: %v", resB)
 
 	fmt.Println("DONE")
 
