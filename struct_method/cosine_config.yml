@@ -1,0 +1,33 @@
+---
+# path to the container creation file
+model:
+  ddDir: "../complete/dd_cosineSim/"
+  
+# created container information
+# container.name is the name of the created container.
+# imgHandle is the name of the created image( userName + "/" + imgName )
+container:
+  name: "dunnoman"
+  image:
+    user: "jackburdick"
+    img: "automated"
+
+# input specific
+input:
+  file: 
+    path: "./input/"
+
+# network information
+# host.ip is the specified IP to host the container.
+# host.port is the port that is exposed to the user/can be called from the API.
+network:
+  host:
+    ip: "127.0.0.1"
+    port: "8000"
+    endpoint: "cosineSim"
+
+tar:
+  dir: "./archive/archive"
+
+
+...
