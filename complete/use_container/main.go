@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -19,16 +20,28 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/jhoonb/archivex"
+	"github.com/spf13/viper"
 )
+
+// Config contains all configuration information -- this is a first draft (jack)
+type Config struct {
+	pathToDockerfile string
+	endPointName     string
+	inputPath        string
+	hostIP           string
+	hostPort         string
+	containerName    string
+	userName         string
+	imgName          string
+	imgHandle        string
+	tarDir           string
+	imgTag           string
+}
 
 // TODO: need to rework the input methodology
 // -- I think the input "helper" should live it its own file and the input
-// type should be specified in the config file.
 
-// NOTE: contant naming maybe should include a `dd` prefx?
-// Constants, these will hopefully eventually come from a YAML/JSON file.
-// pathToDockerfile is a path to the "dataduit" that will be build;
-// necessary components are;
+// config necessary components are;
 // - model
 //		-- the input type needs to be standardized (json?)
 // - Dockerfile
@@ -40,38 +53,29 @@ import (
 //			-- calls main function
 //			-- builds+starts+runs+stops+removes container
 // 				-- sets up ports
+func createConfig(configPath string) (Config, error) {
+	var c Config
 
-// -------------------------------------- dd_container specific.
+	// Set the path for the config file
+	viper.SetConfigFile(configPath)
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Error reading config file, %s", err)
+	}
 
-//const pathToDockerfile string = "../dd_cosineSim/"
-const pathToDockerfile string = "../dd_sudokuSolver/"
+	c.pathToDockerfile = viper.Get("model.ddDir").(string)
+	c.endPointName = viper.Get("network.host.endpoint").(string)
+	c.inputPath = viper.Get("input.file.path").(string)
+	c.hostIP = viper.Get("network.host.ip").(string)
+	c.hostPort = viper.Get("network.host.port").(string)
+	c.containerName = viper.Get("container.name").(string)
+	c.userName = viper.Get("container.image.user").(string)
+	c.imgName = viper.Get("container.image.img").(string)
+	c.imgHandle = c.userName + "/" + c.imgName
+	c.tarDir = viper.Get("tar.dir").(string)
+	c.imgTag = c.imgHandle + ":latest"
 
-// endPointName is the API endpoint used.
-//const endPointName string = "cosineSim"
-const endPointName string = "sudoku"
-
-// --------------------------------------- [END]dd_container specific
-
-// ------------------------------------------ Input specific
-// Input data (directory of files to compare).
-const inputPath string = "./input_sudoku/puzzle_01.txt"
-
-// ------------------------------------------ [END] Input specific
-
-// hostIP is the specified IP to host the container.
-// LOOKINTO: a helper could be used to set this up on a cloud provider.
-const hostIP string = "127.0.0.1"
-
-// hostPort is the port that is exposed to the user/can be called from the API.
-const hostPort string = "8000"
-
-// containerName is the name of the created container.
-const containerName string = "dunnoman"
-
-// imgHandle is the name of the created image
-const userName string = "jackburdick"
-const imgName string = "automated"
-const imgHandle string = userName + "/" + imgName
+	return c, nil
+}
 
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
@@ -105,7 +109,7 @@ func buildImageFromTar(cntx context.Context, tarPath string, imgHandle string, c
 
 // buildContainerFromImage builds the container from the image and returns the
 // created container id.
-func buildContainerFromImage(cntx context.Context, imgTag string, images []types.ImageSummary, cli *client.Client) (string, error) {
+func buildContainerFromImage(cntx context.Context, imgTag string, hostIP string, hostPort string, containerName string, images []types.ImageSummary, cli *client.Client) (string, error) {
 	var contID string
 	for _, image := range images {
 
@@ -196,17 +200,23 @@ func deleteImageByTag(cntx context.Context, imgTag string, images []types.ImageS
 // main creates and uses the container.
 func main() {
 
+	configFilePath := "./sudoku_config.yml"
+	c, err := createConfig(configFilePath)
+	if err != nil {
+		fmt.Printf("Error creating config: %v\n", err)
+	}
+
 	// TODO: is there a better way to handle this? There likely is, the latest
 	// tag may be needed for grabbing the image, but I don't think it's needed
 	// for creating the image.
-	imgTag := imgHandle + ":latest"
+	//imgTag := imgHandle + ":latest"
 
 	// TODO: this could be sent to a temp directory and should also maybe be
 	// deleted after use.
-	pathToCreatedTarDir := "./archive/archive"
+	//pathToCreatedTarDir := "./archive/archive"
 
 	// Create tar.
-	tarPath, err := createTar(pathToCreatedTarDir, pathToDockerfile)
+	tarPath, err := createTar(c.tarDir, c.pathToDockerfile)
 	if err != nil {
 		fmt.Printf("Unable to create tar: %v", err)
 	}
@@ -222,7 +232,7 @@ func main() {
 	cntx := context.Background()
 
 	// Build image from the tar file.
-	buildImageFromTar(cntx, tarPath, imgHandle, cli)
+	buildImageFromTar(cntx, tarPath, c.imgHandle, cli)
 
 	// TODO: see if I can do this without the loop.
 	images, err := cli.ImageList(cntx, types.ImageListOptions{})
@@ -231,7 +241,7 @@ func main() {
 	}
 
 	// Build container and get container id.
-	contID, err := buildContainerFromImage(cntx, imgTag, images, cli)
+	contID, err := buildContainerFromImage(cntx, c.imgTag, c.hostIP, c.hostPort, c.containerName, images, cli)
 	if err != nil {
 		fmt.Printf("error > build container: %v\n", err)
 	}
@@ -242,12 +252,12 @@ func main() {
 	// ----------------------------------- use container
 
 	// URL endpoints.
-	URL := "http://" + hostIP + ":" + hostPort + "/" + endPointName
-	//URL := "http://" + hostIP + ":" + hostPort + "/"
+	URL := "http://" + c.hostIP + ":" + c.hostPort + "/" + c.endPointName
+	//URL := "http://" + c.hostIP + ":" + c.hostPort + "/"
 
 	// Create map from input directory.
 	// fileMap, err := createMap(inputDir)
-	fileMap, err := createSudokuInput(inputPath)
+	fileMap, err := createSudokuInput(c.inputPath)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -316,7 +326,7 @@ func main() {
 	removeContainerByID(cntx, contID, cli)
 
 	// Delete the image.
-	deleteImageByTag(cntx, imgTag, images, cli)
+	deleteImageByTag(cntx, c.imgTag, images, cli)
 
 	// TODO: I'm really unsure how to handle this pruning situation
 	// I don't want to prune any images not created by dataduit.
