@@ -62,16 +62,44 @@ func createConfig(configPath string) (Config, error) {
 		log.Fatalf("Error reading config file, %s", err)
 	}
 
-	c.pathToDockerfile = viper.Get("model.ddDir").(string)
-	c.endPointName = viper.Get("network.host.endpoint").(string)
-	c.inputPath = viper.Get("input.file.path").(string)
-	c.hostIP = viper.Get("network.host.ip").(string)
-	c.hostPort = viper.Get("network.host.port").(string)
-	c.containerName = viper.Get("container.name").(string)
-	c.userName = viper.Get("container.image.user").(string)
-	c.imgName = viper.Get("container.image.img").(string)
+	var ok bool
+	c.pathToDockerfile, ok = viper.Get("model.ddDir").(string)
+	if !ok {
+		fmt.Printf("error retriving pathToDockerfile from config\n")
+	}
+	c.endPointName, ok = viper.Get("network.host.endpoint").(string)
+	if !ok {
+		fmt.Printf("error retriving endPointName from config\n")
+	}
+	c.inputPath, ok = viper.Get("input.file.path").(string)
+	if !ok {
+		fmt.Printf("error retriving inputPath from config\n")
+	}
+	c.hostIP, ok = viper.Get("network.host.ip").(string)
+	if !ok {
+		fmt.Printf("error retriving hostIP from config\n")
+	}
+	c.hostPort, ok = viper.Get("network.host.port").(string)
+	if !ok {
+		fmt.Printf("error retriving hostPort from config\n")
+	}
+	c.containerName, ok = viper.Get("container.name").(string)
+	if !ok {
+		fmt.Printf("error retriving containerName from config\n")
+	}
+	c.userName, ok = viper.Get("container.image.user").(string)
+	if !ok {
+		fmt.Printf("error retriving userName from config\n")
+	}
+	c.imgName, ok = viper.Get("container.image.img").(string)
+	if !ok {
+		fmt.Printf("error retriving imgName from config\n")
+	}
 	c.imgHandle = c.userName + "/" + c.imgName
-	c.tarDir = viper.Get("tar.dir").(string)
+	c.tarDir, ok = viper.Get("tar.dir").(string)
+	if !ok {
+		fmt.Printf("error retriving tarDir from config\n")
+	}
 	c.imgTag = c.imgHandle + ":latest"
 
 	return c, nil
