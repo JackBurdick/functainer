@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -19,13 +18,12 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
-	"github.com/jdkato/prose/tokenize"
 	"github.com/jhoonb/archivex"
 	"github.com/spf13/viper"
 )
 
-// Config contains all configuration information -- this is a first draft (jack)
-type Config struct {
+// config contains all configuration information -- this is a first draft (jack)
+type config struct {
 	pathToDockerfile string
 	endPointName     string
 	inputPath        string
@@ -37,6 +35,11 @@ type Config struct {
 	imgHandle        string
 	tarDir           string
 	imgTag           string
+}
+
+type ddContainer struct {
+	ddConfig config
+	context  context.Context
 }
 
 // TODO: need to rework the input methodology
@@ -55,13 +58,14 @@ type Config struct {
 //			-- builds+starts+runs+stops+removes container
 // 				-- sets up ports
 // TODO: file or directory handling -- if file == nil?
-func createConfig(configPath string) (Config, error) {
-	var c Config
+func (dd *ddContainer) config(configPath string) (config, error) {
+
+	var c config
 
 	// Set the path for the config file
 	viper.SetConfigFile(configPath)
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("Error reading config file, %s", err)
+		fmt.Printf("Error reading config file, %s", err)
 	}
 
 	var ok bool
@@ -229,12 +233,14 @@ func deleteImageByTag(cntx context.Context, imgTag string, images []types.ImageS
 
 // main creates and uses the container.
 func main() {
+	var dd ddContainer
 
 	configFilePath := "./cosine_config.yml"
-	c, err := createConfig(configFilePath)
+	c, err := dd.config(configFilePath)
 	if err != nil {
 		fmt.Printf("Error creating config: %v\n", err)
 	}
+	dd.ddConfig = c
 
 	// Create tar of all container related files.
 	tarPath, err := createTar(c.tarDir, c.pathToDockerfile)
@@ -324,8 +330,8 @@ func main() {
 		body, _ := ioutil.ReadAll(resp.Body)
 		fmt.Println("Response:", string(body))
 
-		// TODO: this currently isn't working - API return value will need to
-		// be changed depending on whether this unmarshal is attempted.
+		// TODO: unmarshal to JSON currently isn't working - API return value
+		// will need to be changed depending on whether this unmarshal is attempted.
 		// resultMap := make(map[string]map[string]float64)
 		//json.Unmarshal(body, &resultMap)
 		//fmt.Println(resultMap)
@@ -369,86 +375,3 @@ func main() {
 	}
 
 }
-
-// ------------- TODO: not sure where to include these preprocessing functions,
-// Ideally, they would sit outside of main.
-// ------------ Helper function related to loading data into dd_container fmt
-
-// TODO: this functionality is dd_container specific.
-// createMap is a helper that accepts a path to a directory and creates the
-// input data for the model.
-// NOTE: this may/may not be included in functionality.  It will likely fall on
-// the user to create the specified input data.
-func createMap(dPath string) (map[string][]string, error) {
-	fileMap := make(map[string][]string)
-
-	// Create map of filename to tokenized content.
-	dFiles, _ := ioutil.ReadDir(dPath)
-	for _, f := range dFiles {
-		b, err := ioutil.ReadFile(dPath + f.Name())
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		// Convert bytes to string, then use 3rd party to tokenize.
-		fileMap[f.Name()] = tokenize.TextToWords(string(b))
-	}
-
-	return fileMap, nil
-}
-
-// -------------------------------------------
-
-// // crossIndex 'crosses' two strings such that the two individual values from
-// // each string join together to create a new value.  For example, if string one
-// // is "ABC" and string two is "123", the resulting return value will be;
-// // ["A1","A2","A3","B1","B2","B3","C1","C2","C3"].
-// func crossIndex(A string, N string) []string {
-// 	var ks []string
-// 	for _, a := range A {
-// 		for _, n := range N {
-// 			ks = append(ks, (string(a) + string(n)))
-// 		}
-// 	}
-// 	return ks
-// }
-
-// func createSudokuInput(fPath string) (map[string][]string, error) {
-// 	sudokuMap := make(map[string][]string)
-
-// 	data, err := ioutil.ReadFile(fPath)
-// 	if err != nil {
-// 		return sudokuMap, err
-// 	}
-
-// 	// Global board information.  The Sudoku board is assumed to be a standard
-// 	// 9x9 (A-I)x(1-9) grid -- where the first index (upper left) would be `A1`
-// 	// and the last index (lower right) would be `I9`.
-// 	rows := "ABCDEFGHI"
-// 	cols := "123456789"
-// 	inds := crossIndex(rows, cols)
-
-// 	// Convert the string representing the board into a grid(map) that maps a
-// 	// key (index) to the values (label for the box, or possible label for the
-// 	// box). for instance, if we know A1=7, map['A1'] = '7', but if the given
-// 	// index is empty (B2, as an example), the corresponding value would be
-// 	// '123456789' (map['B2'] = '123456789') NOTE: i acts as an increment for
-// 	// every target character found.
-// 	i := 0
-// 	for _, c := range data {
-// 		switch string(c) {
-// 		case "_":
-// 			sudokuMap[inds[i]] = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"}
-// 			i++
-// 		case "1", "2", "3", "4", "5", "6", "7", "8", "9":
-// 			sudokuMap[inds[i]] = []string{string(c)}
-// 			i++
-// 		case "\n", " ", "\r":
-// 			continue
-// 		default:
-// 			return sudokuMap, fmt.Errorf("unexpected value (%v) in Sudoku input", c)
-// 		}
-// 	}
-
-// 	return sudokuMap, nil
-// }
