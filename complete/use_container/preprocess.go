@@ -1,12 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"io/ioutil"
-
-	"github.com/jdkato/prose/tokenize"
-)
-
 // ------------- TODO: not sure where to include these preprocessing functions,
 // Ideally, they would sit outside of main.
 // ------------ Helper function related to loading data into dd_container fmt
@@ -19,27 +12,27 @@ import (
 // input data for the model.
 // NOTE: this may/may not be included in functionality.  It will likely fall on
 // the user to create the specified input data.
-func createMap(dPath string) (map[string][]string, error) {
-	fileMap := make(map[string][]string)
+// func createMap(dPath string) (map[string][]string, error) {
+// 	fileMap := make(map[string][]string)
 
-	// Create map of filename to tokenized content.
-	dFiles, _ := ioutil.ReadDir(dPath)
-	for _, f := range dFiles {
-		b, err := ioutil.ReadFile(dPath + f.Name())
-		if err != nil {
-			fmt.Println(err)
-		}
+// 	// Create map of filename to tokenized content.
+// 	dFiles, _ := ioutil.ReadDir(dPath)
+// 	for _, f := range dFiles {
+// 		b, err := ioutil.ReadFile(dPath + f.Name())
+// 		if err != nil {
+// 			fmt.Println(err)
+// 		}
 
-		// Convert bytes to string, then use 3rd party to tokenize.
-		fileMap[f.Name()] = tokenize.TextToWords(string(b))
-	}
+// 		// Convert bytes to string, then use 3rd party to tokenize.
+// 		fileMap[f.Name()] = tokenize.TextToWords(string(b))
+// 	}
 
-	return fileMap, nil
-}
+// 	return fileMap, nil
+// }
 
-// ------------------------------------------------[END] cosine
+// // ------------------------------------------------[END] cosine
 
-// ------------------------------------------------ Sudoku
+// // ------------------------------------------------ Sudoku
 
 // // crossIndex 'crosses' two strings such that the two individual values from
 // // each string join together to create a new value.  For example, if string one
@@ -94,4 +87,5 @@ func createMap(dPath string) (map[string][]string, error) {
 
 // 	return sudokuMap, nil
 // }
-// ------------------------------------------------ [END]Sudoku
+
+// //------------------------------------------------ [END]Sudoku

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,21 +11,22 @@ import (
 	"strings"
 	"time"
 
+	"context"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
+	"github.com/jdkato/prose/tokenize"
 	"github.com/jhoonb/archivex"
 	"github.com/spf13/viper"
 )
 
-// config contains all configuration information -- this is a first draft (jack)
+// Config contains all configuration information -- this is a first draft (jack)
 type config struct {
 	pathToDockerfile string
 	endPointName     string
-	inputPath        string
 	hostIP           string
 	hostPort         string
 	containerName    string
@@ -35,30 +35,24 @@ type config struct {
 	imgHandle        string
 	tarDir           string
 	imgTag           string
+	//inputPath        string
+}
+
+type created struct {
+	contID  string
+	tarPath string
+	url     string
 }
 
 type ddContainer struct {
-	ddConfig config
-	context  context.Context
+	ddConfig  config
+	ddCreated created
+	cntx      context.Context
+	cli       *client.Client
 }
 
-// TODO: need to rework the input methodology
-// -- I think the input "helper" should live it its own file and the input
-
-// config necessary components are;
-// - model
-//		-- the input type needs to be standardized (json?)
-// - Dockerfile
-// 		- builds container
-// - required files/fixtures
-//		-- for example, in cosineSimilarity stopwords+punctuation
-// - API (main.go)
-// 		- This will likely become the main `dataduit` wrapper
-//			-- calls main function
-//			-- builds+starts+runs+stops+removes container
-// 				-- sets up ports
-// TODO: file or directory handling -- if file == nil?
-func (dd *ddContainer) config(configPath string) (config, error) {
+// set configuration for the container
+func (dd *ddContainer) configDD(configPath string) error {
 
 	var c config
 
@@ -77,10 +71,10 @@ func (dd *ddContainer) config(configPath string) (config, error) {
 	if !ok {
 		fmt.Printf("error retriving endPointName from config\n")
 	}
-	c.inputPath, ok = viper.Get("input.file.path").(string)
-	if !ok {
-		fmt.Printf("error retriving inputPath from config\n")
-	}
+	// c.inputPath, ok = viper.Get("input.file.path").(string)
+	// if !ok {
+	// 	fmt.Printf("error retriving inputPath from config\n")
+	// }
 	c.hostIP, ok = viper.Get("network.host.ip").(string)
 	if !ok {
 		fmt.Printf("error retriving hostIP from config\n")
@@ -108,7 +102,178 @@ func (dd *ddContainer) config(configPath string) (config, error) {
 	}
 	c.imgTag = c.imgHandle + ":latest"
 
-	return c, nil
+	dd.ddConfig = c
+
+	return nil
+}
+
+// build, start, run container
+func (dd *ddContainer) startDD() error {
+	// Create tar of all container related files.
+	tarPath, err := createTar(dd.ddConfig.tarDir, dd.ddConfig.pathToDockerfile)
+	if err != nil {
+		fmt.Printf("Unable to create tar: %v", err)
+	}
+	dd.ddCreated.tarPath = tarPath
+
+	// Create docker cli environment.
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+	dd.cli = cli
+
+	// TODO: look into this variable. Though it is being used "correctly", I'm
+	// not sure of its details.
+	cntx := context.Background()
+	dd.cntx = cntx
+
+	// Build image from the tar file.
+	buildImageFromTar(cntx, dd.ddCreated.tarPath, dd.ddConfig.imgHandle, dd.cli)
+
+	// TODO: see if I can do this without the loop.
+	images, err := dd.cli.ImageList(dd.cntx, types.ImageListOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	// Build container and get container id.
+	contID, err := buildContainerFromImage(dd.cntx, dd.ddConfig.imgTag, dd.ddConfig.hostIP, dd.ddConfig.hostPort, dd.ddConfig.containerName, images, dd.cli)
+	if err != nil {
+		fmt.Printf("error > build container: %v\n", err)
+	}
+	dd.ddCreated.contID = contID
+
+	// Start the container
+	startContainerByID(dd.cntx, dd.ddCreated.contID, dd.cli)
+
+	// set API endpoint.
+	dd.ddCreated.url = "http://" + dd.ddConfig.hostIP + ":" + dd.ddConfig.hostPort + "/" + dd.ddConfig.endPointName
+	//dd.ddCreated.url := "http://" + dd.ddConfig.hostIP + ":" + dd.ddConfig.hostPort + "/"
+
+	return nil
+}
+
+// run input through container
+func (dd *ddContainer) useDD(inputPath string, preProcess string) (string, error) {
+	var result string
+	//var fileMap
+	// Create map from input directory.
+	// TODO: handle input information (file vs dir)
+	// TODO: handle input preprocessing function.
+
+	var jsonData []byte
+	if preProcess == "cosine" {
+		fileMap, err := createMap(inputPath)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		// Build json data from map.
+		jsonData, err = json.Marshal(fileMap)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else if preProcess == "sudoku" {
+		fileMap, err := createSudokuInput(inputPath)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		// Build json data from map.
+		jsonData, err = json.Marshal(fileMap)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+	// fileMap, err := createMap(inputPath)
+	// fileMap, err := createSudokuInput(c.inputPath)
+
+	// Gzip json data.
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_, err := zw.Write(jsonData)
+	if err != nil {
+		fmt.Printf("can't gzip: %v\n", err)
+	}
+	if err := zw.Close(); err != nil {
+		fmt.Printf("can't close zw: %v\n", err)
+	}
+
+	// Create new request.
+	req, err := http.NewRequest("POST", dd.ddCreated.url, &buf)
+	if err != nil {
+		fmt.Println(err)
+	}
+	req.Header.Set("X-Custom-Header", "CaaF")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+
+	// Send Request and get response.
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+
+	// Read response.
+	if resp.StatusCode == http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		result = string(body)
+
+		// TODO: unmarshal to JSON currently isn't working - API return value
+		// will need to be changed depending on whether this unmarshal is attempted.
+		// resultMap := make(map[string]map[string]float64)
+		//json.Unmarshal(body, &resultMap)
+		//fmt.Println(resultMap)
+	} else {
+		// TODO: create return error
+		fmt.Println("response Statuscode:", resp.StatusCode)
+		fmt.Println("response Status:", resp.Status)
+		fmt.Println("response Headers:", resp.Header)
+		result = "Nothing to see here"
+	}
+
+	return result, nil
+}
+
+// stop, delete container and image
+func (dd *ddContainer) endDD() error {
+
+	// Stop the container.
+	stopContainerByID(dd.cntx, dd.ddCreated.contID, dd.cli)
+
+	// Remove the container.
+	removeContainerByID(dd.cntx, dd.ddCreated.contID, dd.cli)
+
+	// TODO: see if I can do this without the loop.
+	images, err := dd.cli.ImageList(dd.cntx, types.ImageListOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	// Delete the image.
+	deleteImageByTag(dd.cntx, dd.ddConfig.imgTag, images, dd.cli)
+
+	return nil
+}
+
+// config, start, stop, end
+func (dd *ddContainer) completeDD(inputPath string, preProcessMethod string) (string, error) {
+	err := dd.startDD()
+	if err != nil {
+		fmt.Printf("Error starting container: %v\n", err)
+	}
+
+	res, err := dd.useDD(inputPath, preProcessMethod)
+	if err != nil {
+		fmt.Printf("Error using container: %v\n", err)
+	}
+	//fmt.Printf("Response: %v", res)
+
+	dd.endDD()
+	return res, nil
 }
 
 // createTar creates a tar of the Dockerfile directory.
@@ -231,147 +396,121 @@ func deleteImageByTag(cntx context.Context, imgTag string, images []types.ImageS
 	}
 }
 
-// main creates and uses the container.
 func main() {
-	var dd ddContainer
+	var err error
 
-	configFilePath := "./cosine_config.yml"
-	c, err := dd.config(configFilePath)
+	// Configure cosine container.
+	var cosineContainer ddContainer
+	cosineConfig := "./cosine_config.yml"
+	cInputPath := "./input/"
+	err = cosineContainer.configDD(cosineConfig)
 	if err != nil {
-		fmt.Printf("Error creating config: %v\n", err)
+		fmt.Printf("Error with cosineContainer config: %v\n", err)
 	}
-	dd.ddConfig = c
 
-	// Create tar of all container related files.
-	tarPath, err := createTar(c.tarDir, c.pathToDockerfile)
+	// Use cosine container.
+	cosRes, err := cosineContainer.completeDD(cInputPath, "cosine")
 	if err != nil {
-		fmt.Printf("Unable to create tar: %v", err)
+		fmt.Printf("Error using container: %v\n", err)
 	}
+	fmt.Printf("Cosine Result: %v\n\n", cosRes)
 
-	// Create docker cli environment.
-	cli, err := client.NewEnvClient()
+	// Configure Sudoku container.
+	var sudokuContainer ddContainer
+	sudokuConfig := "./sudoku_config.yml"
+	sInputPath := "./input_sudoku/puzzle_01.txt"
+	err = sudokuContainer.configDD(sudokuConfig)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error with sudokuContainer config: %v\n", err)
 	}
 
-	// TODO: look into this variable. Though it is being used "correctly", I'm
-	// not sure of its details.
-	cntx := context.Background()
-
-	// Build image from the tar file.
-	buildImageFromTar(cntx, tarPath, c.imgHandle, cli)
-
-	// TODO: see if I can do this without the loop.
-	images, err := cli.ImageList(cntx, types.ImageListOptions{})
+	// Use sudoku container.
+	sudokuRes, err := sudokuContainer.completeDD(sInputPath, "sudoku")
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error using container: %v\n", err)
 	}
-
-	// Build container and get container id.
-	contID, err := buildContainerFromImage(cntx, c.imgTag, c.hostIP, c.hostPort, c.containerName, images, cli)
-	if err != nil {
-		fmt.Printf("error > build container: %v\n", err)
-	}
-
-	// Start the container
-	startContainerByID(cntx, contID, cli)
-
-	// ----------------------------------- use container
-
-	// URL endpoints.
-	URL := "http://" + c.hostIP + ":" + c.hostPort + "/" + c.endPointName
-	//URL := "http://" + c.hostIP + ":" + c.hostPort + "/"
-
-	// Create map from input directory.
-	// TODO: handle input information (file vs dir)
-	// TODO: handle input preprocessing function.
-	fileMap, err := createMap(c.inputPath)
-	// fileMap, err := createSudokuInput(c.inputPath)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// Build json data from map.
-	jsonData, err := json.Marshal(fileMap)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// Gzip json data.
-	var buf bytes.Buffer
-	zw := gzip.NewWriter(&buf)
-	_, err = zw.Write(jsonData)
-	if err != nil {
-		fmt.Printf("can't gzip: %v\n", err)
-	}
-	if err := zw.Close(); err != nil {
-		fmt.Printf("can't close zw: %v\n", err)
-	}
-
-	// Create new request.
-	req, err := http.NewRequest("POST", URL, &buf)
-	if err != nil {
-		fmt.Println(err)
-	}
-	req.Header.Set("X-Custom-Header", "CaaF")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Content-Encoding", "gzip")
-
-	// Send Request and get response.
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer resp.Body.Close()
-
-	// Read response.
-	if resp.StatusCode == http.StatusOK {
-		body, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("Response:", string(body))
-
-		// TODO: unmarshal to JSON currently isn't working - API return value
-		// will need to be changed depending on whether this unmarshal is attempted.
-		// resultMap := make(map[string]map[string]float64)
-		//json.Unmarshal(body, &resultMap)
-		//fmt.Println(resultMap)
-	} else {
-		fmt.Println("response Statuscode:", resp.StatusCode)
-		fmt.Println("response Status:", resp.Status)
-		fmt.Println("response Headers:", resp.Header)
-	}
-
-	// ----------------- stop container
-
-	// Stop the container.
-	stopContainerByID(cntx, contID, cli)
-
-	// Remove the container.
-	removeContainerByID(cntx, contID, cli)
-
-	// Delete the image.
-	deleteImageByTag(cntx, c.imgTag, images, cli)
-
-	// TODO: I'm really unsure how to handle this pruning situation
-	// I don't want to prune any images not created by dataduit.
-	// The other problem here is that there is the 'multistage' building
-	// occuring, so I'm not sure how to make a label for the build stage image.
-	//timeString := "30s"
-	// Prune containers with the created label.
-	cPruneFilter := filters.NewArgs()
-	//cPruneFilter.Add("label", "slippery:fish")
-	//cPruneFilter.Add("until", timeString)
-	_, err = cli.ContainersPrune(cntx, cPruneFilter)
-	if err != nil {
-		fmt.Printf("Error prune container: %v\n", err)
-	}
-
-	// Prune image.
-	iPruneFilter := filters.NewArgs()
-	//iPruneFilter.Add("until", timeString)
-	_, err = cli.ImagesPrune(cntx, iPruneFilter)
-	if err != nil {
-		fmt.Printf("Error prune image: %v\n", err)
-	}
+	fmt.Printf("Sudoku Result: %v", sudokuRes)
 
 }
+
+// createMap is a helper that accepts a path to a directory and creates the
+// input data for the model.
+// NOTE: this may/may not be included in functionality.  It will likely fall on
+// the user to create the specified input data.
+func createMap(dPath string) (map[string][]string, error) {
+	fileMap := make(map[string][]string)
+
+	// Create map of filename to tokenized content.
+	dFiles, _ := ioutil.ReadDir(dPath)
+	for _, f := range dFiles {
+		b, err := ioutil.ReadFile(dPath + f.Name())
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		// Convert bytes to string, then use 3rd party to tokenize.
+		fileMap[f.Name()] = tokenize.TextToWords(string(b))
+	}
+
+	return fileMap, nil
+}
+
+// ------------------------------------------------[END] cosine
+
+// ------------------------------------------------ Sudoku
+
+// crossIndex 'crosses' two strings such that the two individual values from
+// each string join together to create a new value.  For example, if string one
+// is "ABC" and string two is "123", the resulting return value will be;
+// ["A1","A2","A3","B1","B2","B3","C1","C2","C3"].
+func crossIndex(A string, N string) []string {
+	var ks []string
+	for _, a := range A {
+		for _, n := range N {
+			ks = append(ks, (string(a) + string(n)))
+		}
+	}
+	return ks
+}
+
+func createSudokuInput(fPath string) (map[string][]string, error) {
+	sudokuMap := make(map[string][]string)
+
+	data, err := ioutil.ReadFile(fPath)
+	if err != nil {
+		return sudokuMap, err
+	}
+
+	// Global board information.  The Sudoku board is assumed to be a standard
+	// 9x9 (A-I)x(1-9) grid -- where the first index (upper left) would be `A1`
+	// and the last index (lower right) would be `I9`.
+	rows := "ABCDEFGHI"
+	cols := "123456789"
+	inds := crossIndex(rows, cols)
+
+	// Convert the string representing the board into a grid(map) that maps a
+	// key (index) to the values (label for the box, or possible label for the
+	// box). for instance, if we know A1=7, map['A1'] = '7', but if the given
+	// index is empty (B2, as an example), the corresponding value would be
+	// '123456789' (map['B2'] = '123456789') NOTE: i acts as an increment for
+	// every target character found.
+	i := 0
+	for _, c := range data {
+		switch string(c) {
+		case "_":
+			sudokuMap[inds[i]] = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9"}
+			i++
+		case "1", "2", "3", "4", "5", "6", "7", "8", "9":
+			sudokuMap[inds[i]] = []string{string(c)}
+			i++
+		case "\n", " ", "\r":
+			continue
+		default:
+			return sudokuMap, fmt.Errorf("unexpected value (%v) in Sudoku input", c)
+		}
+	}
+
+	return sudokuMap, nil
+}
+
+//------------------------------------------------ [END]Sudoku

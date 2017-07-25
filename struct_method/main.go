@@ -383,14 +383,13 @@ func main() {
 	configPath := "./cosine_config.yml"
 	inputPath := "../complete/use_container/input/"
 
-	// component call
+	// ----------------------- component call
 	var dd ddContainer
 
 	err := dd.configDD(configPath)
 	if err != nil {
 		fmt.Printf("Error with dd conf: %v\n", err)
 	}
-	//fmt.Println(dd.ddConfig)
 
 	err = dd.startDD()
 	if err != nil {
@@ -406,7 +405,7 @@ func main() {
 
 	dd.endDD()
 
-	// ----------- single call
+	// --------------------------- single call
 	var jj ddContainer
 
 	// initialize
