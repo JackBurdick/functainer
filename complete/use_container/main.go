@@ -236,16 +236,7 @@ func main() {
 		fmt.Printf("Error creating config: %v\n", err)
 	}
 
-	// TODO: is there a better way to handle this? There likely is, the latest
-	// tag may be needed for grabbing the image, but I don't think it's needed
-	// for creating the image.
-	//imgTag := imgHandle + ":latest"
-
-	// TODO: this could be sent to a temp directory and should also maybe be
-	// deleted after use.
-	//pathToCreatedTarDir := "./archive/archive"
-
-	// Create tar.
+	// Create tar of all container related files.
 	tarPath, err := createTar(c.tarDir, c.pathToDockerfile)
 	if err != nil {
 		fmt.Printf("Unable to create tar: %v", err)
@@ -287,6 +278,7 @@ func main() {
 
 	// Create map from input directory.
 	// TODO: handle input information (file vs dir)
+	// TODO: handle input preprocessing function.
 	fileMap, err := createMap(c.inputPath)
 	// fileMap, err := createSudokuInput(c.inputPath)
 	if err != nil {
@@ -310,12 +302,7 @@ func main() {
 		fmt.Printf("can't close zw: %v\n", err)
 	}
 
-	// Create http request to container. (using JSON+gzip)
-	/*
-		NOTE: if sending plain json, this works;
-			- req, err := http.NewRequest("POST", URL, bytes.NewBuffer(jsonData))
-	*/
-
+	// Create new request.
 	req, err := http.NewRequest("POST", URL, &buf)
 	if err != nil {
 		fmt.Println(err)
@@ -324,7 +311,7 @@ func main() {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 
-	// Get response.
+	// Send Request and get response.
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -383,7 +370,10 @@ func main() {
 
 }
 
+// ------------- TODO: not sure where to include these preprocessing functions,
+// Ideally, they would sit outside of main.
 // ------------ Helper function related to loading data into dd_container fmt
+
 // TODO: this functionality is dd_container specific.
 // createMap is a helper that accepts a path to a directory and creates the
 // input data for the model.
