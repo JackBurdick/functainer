@@ -12,11 +12,6 @@ container:
     user: "jackburdick"
     img: "automated"
 
-# input specific
-input:
-  file: 
-    path: "./input/input_cosine/"
-
 # network information
 # host.ip is the specified IP to host the container.
 # host.port is the port that is exposed to the user/can be called from the API.
