@@ -1,13 +1,13 @@
 ---
-# path to the container creation file
+# path to the container creation file (relative to where the container is called from)
 model:
-  ddDir: "../dd_cosineSim/"
+  ddDir: "../container/cosineSim/"
   
 # created container information
 # container.name is the name of the created container.
 # imgHandle is the name of the created image( userName + "/" + imgName )
 container:
-  name: "dunnoman"
+  name: "cosine"
   image:
     user: "jackburdick"
     img: "automated"
@@ -15,7 +15,7 @@ container:
 # input specific
 input:
   file: 
-    path: "./input/"
+    path: "./input/input_cosine/"
 
 # network information
 # host.ip is the specified IP to host the container.

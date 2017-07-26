@@ -401,8 +401,8 @@ func main() {
 
 	// Configure cosine container.
 	var cosineContainer ddContainer
-	cosineConfig := "./cosine_config.yml"
-	cInputPath := "./input/"
+	cosineConfig := "./config/cosine_config.yml"
+	cInputPath := "./input/input_cosine/"
 	err = cosineContainer.configDD(cosineConfig)
 	if err != nil {
 		fmt.Printf("Error with cosineContainer config: %v\n", err)
@@ -417,8 +417,8 @@ func main() {
 
 	// Configure Sudoku container.
 	var sudokuContainer ddContainer
-	sudokuConfig := "./sudoku_config.yml"
-	sInputPath := "./input_sudoku/puzzle_01.txt"
+	sudokuConfig := "./config/sudoku_config.yml"
+	sInputPath := "./input/input_sudoku/puzzle_01.txt"
 	err = sudokuContainer.configDD(sudokuConfig)
 	if err != nil {
 		fmt.Printf("Error with sudokuContainer config: %v\n", err)
