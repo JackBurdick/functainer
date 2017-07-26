@@ -15,7 +15,7 @@ model:
 # container.name is the name of the created container.
 # imgHandle is the name of the created image( userName + "/" + imgName )
 container:
-  name: "dunnoman"
+  name: "<container_name>"
   image:
     user: "jackburdick"
     img: "automated"
@@ -28,7 +28,7 @@ network:
   host:
     ip: "127.0.0.1"
     port: "8000"
-    endpoint: "functionName"
+    endpoint: "<functionName>"
 
 tar:
   dir: "./archive/archive"

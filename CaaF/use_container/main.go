@@ -23,7 +23,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config contains all configuration information -- this is a first draft (jack)
+// config contains all configuration information -- this is a first draft (jack)
+// TODO: naming will have to be improved.
 type config struct {
 	pathToDockerfile string
 	endPointName     string
@@ -35,15 +36,20 @@ type config struct {
 	imgHandle        string
 	tarDir           string
 	imgTag           string
-	//inputPath        string
 }
 
+// created is a struct that containers config information that is created during
+// the container build. This information was placed in its own struct to show
+// separation from information extracted from the yml config file. However, this
+// struct may be removed/merged in the future.
 type created struct {
 	contID  string
 	tarPath string
 	url     string
 }
 
+// ddContainer is a wrapper struct that holds all container information
+// (config and usage).
 type ddContainer struct {
 	ddConfig  config
 	ddCreated created
@@ -51,7 +57,9 @@ type ddContainer struct {
 	cli       *client.Client
 }
 
-// set configuration for the container
+// configDD sets all the configuration for the container. The information is
+// read by `spf13/viper` from the specified yml config file and placed in the
+// `config` struct above so that it can be called later with `ddContainer.config`.
 func (dd *ddContainer) configDD(configPath string) error {
 
 	var c config
@@ -71,10 +79,6 @@ func (dd *ddContainer) configDD(configPath string) error {
 	if !ok {
 		fmt.Printf("error retriving endPointName from config\n")
 	}
-	// c.inputPath, ok = viper.Get("input.file.path").(string)
-	// if !ok {
-	// 	fmt.Printf("error retriving inputPath from config\n")
-	// }
 	c.hostIP, ok = viper.Get("network.host.ip").(string)
 	if !ok {
 		fmt.Printf("error retriving hostIP from config\n")
@@ -107,8 +111,9 @@ func (dd *ddContainer) configDD(configPath string) error {
 	return nil
 }
 
-// build, start, run container
+// startDD is a wrapper function that builds and starts the container.
 func (dd *ddContainer) startDD() error {
+
 	// Create tar of all container related files.
 	tarPath, err := createTar(dd.ddConfig.tarDir, dd.ddConfig.pathToDockerfile)
 	if err != nil {
@@ -131,37 +136,38 @@ func (dd *ddContainer) startDD() error {
 	// Build image from the tar file.
 	buildImageFromTar(cntx, dd.ddCreated.tarPath, dd.ddConfig.imgHandle, dd.cli)
 
-	// TODO: see if I can do this without the loop.
+	// TODO: see if subsequent steps can be done without the looping all the images.
 	images, err := dd.cli.ImageList(dd.cntx, types.ImageListOptions{})
 	if err != nil {
 		panic(err)
 	}
 
-	// Build container and get container id.
+	// Build container and obtain the created container id.
 	contID, err := buildContainerFromImage(dd.cntx, dd.ddConfig.imgTag, dd.ddConfig.hostIP, dd.ddConfig.hostPort, dd.ddConfig.containerName, images, dd.cli)
 	if err != nil {
 		fmt.Printf("error > build container: %v\n", err)
 	}
 	dd.ddCreated.contID = contID
 
-	// Start the container
+	// Start the container.
 	startContainerByID(dd.cntx, dd.ddCreated.contID, dd.cli)
 
-	// set API endpoint.
+	// Set API endpoint that is consistent with the created container and the
+	// API usage.
 	dd.ddCreated.url = "http://" + dd.ddConfig.hostIP + ":" + dd.ddConfig.hostPort + "/" + dd.ddConfig.endPointName
 	//dd.ddCreated.url := "http://" + dd.ddConfig.hostIP + ":" + dd.ddConfig.hostPort + "/"
 
 	return nil
 }
 
-// run input through container
+// useDD is a wrapper function that uses the container by passing input to the
+// main functionality and returning the result.
 func (dd *ddContainer) useDD(inputPath string, preProcess string) (string, error) {
 	var result string
-	//var fileMap
+
 	// Create map from input directory.
 	// TODO: handle input information (file vs dir)
 	// TODO: handle input preprocessing function.
-
 	var jsonData []byte
 	if preProcess == "cosine" {
 		fileMap, err := createMap(inputPath)
@@ -186,10 +192,8 @@ func (dd *ddContainer) useDD(inputPath string, preProcess string) (string, error
 			fmt.Println(err)
 		}
 	}
-	// fileMap, err := createMap(inputPath)
-	// fileMap, err := createSudokuInput(c.inputPath)
 
-	// Gzip json data.
+	// Gzip (lossless compression) json data.
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
 	_, err := zw.Write(jsonData)
@@ -209,7 +213,7 @@ func (dd *ddContainer) useDD(inputPath string, preProcess string) (string, error
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 
-	// Send Request and get response.
+	// Send Request and obtain response.
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -238,7 +242,10 @@ func (dd *ddContainer) useDD(inputPath string, preProcess string) (string, error
 	return result, nil
 }
 
-// stop, delete container and image
+// endDD is a wrapper function that stops the container and deletes the created
+// image and container.  NOTE: the functionality here is flawed. Currently all
+// images are pruned and all containers are pruned.  Further, since moving to
+// the struct methodology, the images aren't actually pruned.
 func (dd *ddContainer) endDD() error {
 
 	// Stop the container.
@@ -247,7 +254,7 @@ func (dd *ddContainer) endDD() error {
 	// Remove the container.
 	removeContainerByID(dd.cntx, dd.ddCreated.contID, dd.cli)
 
-	// TODO: see if I can do this without the loop.
+	// TODO: see if this can be done without looping the images in later steps.
 	images, err := dd.cli.ImageList(dd.cntx, types.ImageListOptions{})
 	if err != nil {
 		panic(err)
@@ -259,7 +266,9 @@ func (dd *ddContainer) endDD() error {
 	return nil
 }
 
-// config, start, stop, end
+// completeDD is a wrapper function that wraps the above configDD, startDD,
+// useDD, and endDD into one function call. This function is useful if the
+// container is only going to be used once.
 func (dd *ddContainer) completeDD(inputPath string, preProcessMethod string) (string, error) {
 	err := dd.startDD()
 	if err != nil {
@@ -270,11 +279,14 @@ func (dd *ddContainer) completeDD(inputPath string, preProcessMethod string) (st
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
-	//fmt.Printf("Response: %v", res)
 
 	dd.endDD()
 	return res, nil
 }
+
+// ----------------------- HELPER FUNCTIONS USED BY THE ABOVE WRAPPER FUNCTIONS
+// this may be removed, as they really only hide the cost of each function call
+// since they are not large functions.
 
 // createTar creates a tar of the Dockerfile directory.
 func createTar(pathToCreatedTarDir string, pathToDockerfile string) (string, error) {
@@ -396,6 +408,8 @@ func deleteImageByTag(cntx context.Context, imgTag string, images []types.ImageS
 	}
 }
 
+// ------------------ HELPER FUNCTIONS USED BY THE ABOVE WRAPPER FUNCTIONS [END]
+
 func main() {
 	var err error
 
@@ -433,10 +447,13 @@ func main() {
 
 }
 
+// ---------------------------------------------- INPUT PREPROCESSING FUNCTIONS
+// NOTE: This will likely fall on the user to create the specified input data.
+// and will only be included as an example that the user can pull from.
+
 // createMap is a helper that accepts a path to a directory and creates the
 // input data for the model.
-// NOTE: this may/may not be included in functionality.  It will likely fall on
-// the user to create the specified input data.
+
 func createMap(dPath string) (map[string][]string, error) {
 	fileMap := make(map[string][]string)
 
@@ -458,7 +475,6 @@ func createMap(dPath string) (map[string][]string, error) {
 // ------------------------------------------------[END] cosine
 
 // ------------------------------------------------ Sudoku
-
 // crossIndex 'crosses' two strings such that the two individual values from
 // each string join together to create a new value.  For example, if string one
 // is "ABC" and string two is "123", the resulting return value will be;
@@ -513,4 +529,5 @@ func createSudokuInput(fPath string) (map[string][]string, error) {
 	return sudokuMap, nil
 }
 
-//------------------------------------------------ [END]Sudoku
+//------------------------------------------------ Sudoku [END]
+// ----------------------------------------- INPUT PREPROCESSING FUNCTIONS [END]
