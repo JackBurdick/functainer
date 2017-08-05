@@ -1,13 +1,13 @@
 ---
-# path to the container creation file (relative to this file)
+# path to the container creation file (relative to where the container is called from)
 model:
-  ddDir: "../container/sudokuSolver/"
+  ddDir: "../batteries/cosineSim/"
   
 # created container information
 # container.name is the name of the created container.
 # imgHandle is the name of the created image( userName + "/" + imgName )
 container:
-  name: "sudoku"
+  name: "cosine"
   image:
     user: "jackburdick"
     img: "automated"
@@ -19,7 +19,7 @@ network:
   host:
     ip: "127.0.0.1"
     port: "8000"
-    endpoint: "sudoku"
+    endpoint: "cosineSim"
 
 tar:
   dir: "./archive/archive"
