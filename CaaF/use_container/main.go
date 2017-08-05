@@ -3,33 +3,36 @@ package main
 import (
 	"fmt"
 
-	"github.com/JackBurdick/dataduit/CaaF/dataduit"
+	"github.com/JackBurdick/dataduit/dataduit"
 )
 
 func main() {
 	var err error
 
-	// Configure cosine container.
+	// Initialize cosine battery.
 	var cosineContainer dataduit.DdContainer
-	cosineConfig := "./config/cosine_config.yml"
-	cInputPath := "./input/input_cosine/"
-	err = cosineContainer.ConfigDD(cosineConfig)
+
+	// Build battery according to specification.
+	err = cosineContainer.Build("./config/cosine_config.yml")
 	if err != nil {
 		fmt.Printf("Error with cosineContainer config: %v\n", err)
 	}
 
-	// Use cosine container.
+	// Use cosine battery.
+	cInputPath := "./input/input_cosine/"
 	cosRes, err := cosineContainer.CompleteDD(cInputPath, "cosine")
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
+
+	// Print Result.
 	fmt.Printf("Cosine Result: %v\n\n", cosRes)
 
 	// Configure Sudoku container.
 	var sudokuContainer dataduit.DdContainer
-	sudokuConfig := "./config/sudoku_config.yml"
+
 	sInputPath := "./input/input_sudoku/puzzle_01.txt"
-	err = sudokuContainer.ConfigDD(sudokuConfig)
+	err = sudokuContainer.Build("./config/sudoku_config.yml")
 	if err != nil {
 		fmt.Printf("Error with sudokuContainer config: %v\n", err)
 	}

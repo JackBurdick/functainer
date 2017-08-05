@@ -57,10 +57,10 @@ type DdContainer struct {
 	cli       *client.Client
 }
 
-// ConfigDD sets all the configuration for the container. The information is
+// Build sets all the configuration for the container. The information is
 // read by `spf13/viper` from the specified yml config file and placed in the
 // `config` struct above so that it can be called later with `DdContainer.config`.
-func (dd *DdContainer) ConfigDD(configPath string) error {
+func (dd *DdContainer) Build(configPath string) error {
 
 	var c config
 
@@ -266,7 +266,7 @@ func (dd *DdContainer) endDD() error {
 	return nil
 }
 
-// CompleteDD is a wrapper function that wraps the above ConfigDD, startDD,
+// CompleteDD is a wrapper function that wraps the above Build, startDD,
 // useDD, and endDD into one function call. This function is useful if the
 // container is only going to be used once.
 func (dd *DdContainer) CompleteDD(inputPath string, preProcessMethod string) (string, error) {
