@@ -9,24 +9,16 @@ import (
 )
 
 func main() {
-	var err error
-
-	// Configure Sudoku container.
 	var sudokuContainer dataduit.DdContainer
 
-	sInputPath := "../input/puzzle_01.txt"
-	err = sudokuContainer.Configure("./sudoku_config.yml")
+	// Configure Sudoku container.
+	err := sudokuContainer.Configure("./sudoku_config.yml")
 	if err != nil {
 		fmt.Printf("Error with sudokuContainer config: %v\n", err)
 	}
 
-	sfileMap, err := createSudokuInput(sInputPath)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// Build json data from map.
-	sjsonData, err := json.Marshal(sfileMap)
+	// Preprocess input (according to required specified input type)
+	sjsonData, err := createSudokuInput("../input/puzzle_01.txt")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -36,6 +28,8 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
+
+	// Display result
 	fmt.Printf("Sudoku Result: %v\n", sudokuRes)
 
 }
@@ -59,12 +53,17 @@ func crossIndex(A string, N string) []string {
 	return ks
 }
 
-func createSudokuInput(fPath string) (map[string][]string, error) {
+func createSudokuInput(fPath string) ([]byte, error) {
 	sudokuMap := make(map[string][]string)
 
 	data, err := ioutil.ReadFile(fPath)
 	if err != nil {
-		return sudokuMap, err
+		// Build json data from map.
+		sjsonData, err := json.Marshal(sudokuMap)
+		if err != nil {
+			fmt.Println(err)
+		}
+		return sjsonData, err
 	}
 
 	// Global board information.  The Sudoku board is assumed to be a standard
@@ -92,11 +91,22 @@ func createSudokuInput(fPath string) (map[string][]string, error) {
 		case "\n", " ", "\r":
 			continue
 		default:
-			return sudokuMap, fmt.Errorf("unexpected value (%v) in Sudoku input", c)
+			// Build json data from map.
+			sjsonData, err := json.Marshal(sudokuMap)
+			if err != nil {
+				fmt.Println(err)
+			}
+			return sjsonData, fmt.Errorf("unexpected value (%v) in Sudoku input", c)
 		}
 	}
 
-	return sudokuMap, nil
+	// Build json data from map.
+	sjsonData, err := json.Marshal(sudokuMap)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return sjsonData, nil
 }
 
 //------------------------------------------------ Sudoku [END]
