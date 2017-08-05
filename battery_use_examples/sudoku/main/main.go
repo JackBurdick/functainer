@@ -9,8 +9,6 @@ import (
 )
 
 func main() {
-
-	// Initialize cosine battery.
 	var sudokuContainer dataduit.DdContainer
 
 	// Configure Sudoku container.
