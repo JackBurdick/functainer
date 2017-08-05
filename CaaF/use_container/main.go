@@ -16,7 +16,7 @@ func main() {
 	var cosineContainer dataduit.DdContainer
 
 	// Build battery according to specification.
-	err = cosineContainer.Build("./config/cosine_config.yml")
+	err = cosineContainer.Configure("./config/cosine_config.yml")
 	if err != nil {
 		fmt.Printf("Error with cosineContainer config: %v\n", err)
 	}
@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	cosRes, err := cosineContainer.CompleteDD(cjsonData)
+	cosRes, err := cosineContainer.FullUse(cjsonData)
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
@@ -45,7 +45,7 @@ func main() {
 	var sudokuContainer dataduit.DdContainer
 
 	sInputPath := "./input/input_sudoku/puzzle_01.txt"
-	err = sudokuContainer.Build("./config/sudoku_config.yml")
+	err = sudokuContainer.Configure("./config/sudoku_config.yml")
 	if err != nil {
 		fmt.Printf("Error with sudokuContainer config: %v\n", err)
 	}
@@ -62,7 +62,7 @@ func main() {
 	}
 
 	// Use sudoku container.
-	sudokuRes, err := sudokuContainer.CompleteDD(sjsonData)
+	sudokuRes, err := sudokuContainer.FullUse(sjsonData)
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
@@ -78,7 +78,6 @@ func main() {
 
 // createMap is a helper that accepts a path to a directory and creates the
 // input data for the model.
-
 func createMap(dPath string) (map[string][]string, error) {
 	fileMap := make(map[string][]string)
 

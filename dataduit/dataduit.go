@@ -55,10 +55,10 @@ type DdContainer struct {
 	cli       *client.Client
 }
 
-// Build sets all the configuration for the container. The information is
+// Configure sets all the configuration for the container. The information is
 // read by `spf13/viper` from the specified yml config file and placed in the
 // `config` struct above so that it can be called later with `DdContainer.config`.
-func (dd *DdContainer) Build(configPath string) error {
+func (dd *DdContainer) Configure(configPath string) error {
 
 	var c config
 
@@ -109,8 +109,8 @@ func (dd *DdContainer) Build(configPath string) error {
 	return nil
 }
 
-// startDD is a wrapper function that builds and starts the container.
-func (dd *DdContainer) startDD() error {
+// Start is a wrapper function that builds and starts the container.
+func (dd *DdContainer) Start() error {
 
 	// Create tar of all container related files.
 	tarPath, err := createTar(dd.ddConfig.tarDir, dd.ddConfig.pathToDockerfile)
@@ -131,7 +131,7 @@ func (dd *DdContainer) startDD() error {
 	cntx := context.Background()
 	dd.cntx = cntx
 
-	// Build image from the tar file.
+	// Configure image from the tar file.
 	buildImageFromTar(cntx, dd.ddCreated.tarPath, dd.ddConfig.imgHandle, dd.cli)
 
 	// TODO: see if subsequent steps can be done without the looping all the images.
@@ -140,7 +140,7 @@ func (dd *DdContainer) startDD() error {
 		panic(err)
 	}
 
-	// Build container and obtain the created container id.
+	// Configure container and obtain the created container id.
 	contID, err := buildContainerFromImage(dd.cntx, dd.ddConfig.imgTag, dd.ddConfig.hostIP, dd.ddConfig.hostPort, dd.ddConfig.containerName, images, dd.cli)
 	if err != nil {
 		fmt.Printf("error > build container: %v\n", err)
@@ -158,9 +158,9 @@ func (dd *DdContainer) startDD() error {
 	return nil
 }
 
-// useDD is a wrapper function that uses the container by passing input to the
+// Evaluate is a wrapper function that uses the container by passing input to the
 // main functionality and returning the result.
-func (dd *DdContainer) useDD(jsonData []byte) (string, error) {
+func (dd *DdContainer) Evaluate(jsonData []byte) (string, error) {
 	var result string
 
 	// Gzip (lossless compression) json data.
@@ -212,11 +212,11 @@ func (dd *DdContainer) useDD(jsonData []byte) (string, error) {
 	return result, nil
 }
 
-// endDD is a wrapper function that stops the container and deletes the created
+// End is a wrapper function that stops the container and deletes the created
 // image and container.  NOTE: the functionality here is flawed. Currently all
 // images are pruned and all containers are pruned.  Further, since moving to
 // the struct methodology, the images aren't actually pruned.
-func (dd *DdContainer) endDD() error {
+func (dd *DdContainer) End() error {
 
 	// Stop the container.
 	stopContainerByID(dd.cntx, dd.ddCreated.contID, dd.cli)
@@ -236,21 +236,21 @@ func (dd *DdContainer) endDD() error {
 	return nil
 }
 
-// CompleteDD is a wrapper function that wraps the above Build, startDD,
-// useDD, and endDD into one function call. This function is useful if the
+// FullUse is a wrapper function that wraps the above Configure, Start,
+// Evaluate, and End into one function call. This function is useful if the
 // container is only going to be used once.
-func (dd *DdContainer) CompleteDD(jsonData []byte) (string, error) {
-	err := dd.startDD()
+func (dd *DdContainer) FullUse(jsonData []byte) (string, error) {
+	err := dd.Start()
 	if err != nil {
 		fmt.Printf("Error starting container: %v\n", err)
 	}
 
-	res, err := dd.useDD(jsonData)
+	res, err := dd.Evaluate(jsonData)
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
 
-	dd.endDD()
+	dd.End()
 	return res, nil
 }
 
