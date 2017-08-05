@@ -1,7 +1,7 @@
 ---
 # path to the container creation file (relative to this file)
 model:
-  ddDir: "../batteries/sudokuSolver/"
+  ddDir: "../../../batteries/sudokuSolver/"
   
 # created container information
 # container.name is the name of the created container.
@@ -22,7 +22,7 @@ network:
     endpoint: "sudoku"
 
 tar:
-  dir: "./archive/archive"
+  dir: "./archive"
 
 
 ...

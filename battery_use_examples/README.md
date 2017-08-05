@@ -4,12 +4,12 @@
 #### Warnings:
 - all docker images are pruned
 - all docker containers are pruned
-- files are written (`.tar` in `./archive/archive/`)
+- files are written (`.tar` in `./`)
 
 ## Use
 To run;
 1. Make sure docker is running
-2. Navigate to `./use_container/`
+2. Navigate to `./container/main`
 3. `go run main.go`
 
 ### Known issues
@@ -31,17 +31,19 @@ To run;
 
 
 Working Directory
-- `./container/`
-    - holds the main functionality / is meant to be modular
-- `./use_container/`
-    - `./archive/archive.tar`
-        - .tar (created/overwritten when building a container)
+- `./_information/`
+    - holds READMEs for information on components
+- `./<battery>/`
     - `./input/`
         - example input files
-    - `./config/`
-        - holds config files
-    - `./main.go`
-        - **entry point - all functionality lives here**
+    - `./main/`
+        - `./main.go`
+            - **entry point - all functionality lives here**
+        -` config.yml`
+            - configuration information
+        - .tar (created/overwritten when building a container)
+            - Creating this carries some overhead, maybe we could download these&|only create when needed
+        
 
 ### approximate image information
 ```
