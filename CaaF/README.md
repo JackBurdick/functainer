@@ -48,3 +48,15 @@ Working Directory
 REPOSITORY                  TAG                 IMAGE ID            CREATED              SIZE
 jackburdick/cosineexp       latest              a21e1999784a        About a minute ago   10.1MB
 ```
+
+
+### Getting started on ubuntu
+1. go get github.com/spf13/viper
+2. go get -v github.com/jhoonb/archivex
+3. go get -v github.com/jdkato/prose/tokenize
+4. go get -u -v github.com/docker/docker/client
+5. go get -v github.com/docker/go-connections/nat
+6. _follow IMPORTANTNOTES.md (delete specified .../nat file)_
+7. issue `sudo usermod -a -G docker $USER` [note here](https://techoverflow.net/2017/03/01/solving-docker-permission-denied-while-trying-to-connect-to-the-docker-daemon-socket/) to allow the docker to run without entering `sudo`
+8. [reboot]
+9. `run main.go to test`
