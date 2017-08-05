@@ -10,31 +10,22 @@ import (
 )
 
 func main() {
-	var err error
-
-	// Initialize cosine battery.
 	var cosineContainer dataduit.DdContainer
 
 	// Build battery according to specification.
-	err = cosineContainer.Configure("./cosine_config.yml")
+	err := cosineContainer.Configure("./cosine_config.yml")
 	if err != nil {
 		fmt.Printf("Error with cosineContainer config: %v\n", err)
 	}
 
 	// Use cosine battery.
-	cInputPath := "../input/"
-	fileMap, err := createMap(cInputPath)
+	cjsonInput, err := createMap("../input/")
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// Build json data from map.
-	cjsonData, err := json.Marshal(fileMap)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	cosRes, err := cosineContainer.FullUse(cjsonData)
+	// Use cosine battery.
+	cosRes, err := cosineContainer.FullUse(cjsonInput)
 	if err != nil {
 		fmt.Printf("Error using container: %v\n", err)
 	}
@@ -50,7 +41,7 @@ func main() {
 
 // createMap is a helper that accepts a path to a directory and creates the
 // input data for the model.
-func createMap(dPath string) (map[string][]string, error) {
+func createMap(dPath string) ([]byte, error) {
 	fileMap := make(map[string][]string)
 
 	// Create map of filename to tokenized content.
@@ -65,5 +56,11 @@ func createMap(dPath string) (map[string][]string, error) {
 		fileMap[f.Name()] = tokenize.TextToWords(string(b))
 	}
 
-	return fileMap, nil
+	// Build json data from map.
+	cjsonData, err := json.Marshal(fileMap)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return cjsonData, nil
 }
