@@ -18,7 +18,7 @@ func main() {
 		fmt.Printf("Error with cosineContainer config: %v\n", err)
 	}
 
-	// Use cosine battery.
+	// Create input for cosine battery
 	cjsonInput, err := createMap("../input/")
 	if err != nil {
 		fmt.Println(err)
