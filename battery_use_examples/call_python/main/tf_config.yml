@@ -19,7 +19,7 @@ network:
   host:
     ip: "127.0.0.1"
     port: "8000"
-    endpoint: "tf_cpu"
+    endpoint: "tf_cpu_classification"
 
 tar:
   dir: "./archive"
