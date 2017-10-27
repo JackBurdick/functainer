@@ -1,0 +1,28 @@
+---
+# path to the container creation file (relative to this file)
+model:
+  ddDir: "../../../batteries/tf_cpu_classification/"
+  
+# created container information
+# container.name is the name of the created container.
+# imgHandle is the name of the created image( userName + "/" + imgName )
+container:
+  name: "tf_cpu_class"
+  image:
+    user: "jackburdick"
+    img: "automated"
+
+# network information
+# host.ip is the specified IP to host the container.
+# host.port is the port that is exposed to the user/can be called from the API.
+network:
+  host:
+    ip: "127.0.0.1"
+    port: "8000"
+    endpoint: "tf_cpu"
+
+tar:
+  dir: "./archive"
+
+
+...
