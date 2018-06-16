@@ -1,3 +1,1 @@
-# Yensor
-
-Yensor is a prototype (and yet to be implemented) yaml to `<dl_framework>` parser+
+this was moved to a seperate repository and may/may be moved back: [link](https://github.com/JackBurdick/yensor)
